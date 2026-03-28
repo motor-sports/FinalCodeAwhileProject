@@ -43,7 +43,7 @@ html,body{height:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;ba
 .legend-bar{width:140px;height:8px;border-radius:4px;background:linear-gradient(to right,#E24B4A 0%,#EF9F27 50%,#1D9E75 100%);}
 .legend-label{font-size:10px;color:rgba(255,255,255,0.6);}
 .map-label-card{position:absolute;top:12px;left:12px;background:rgba(10,14,20,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius);padding:6px 10px;font-size:10px;color:rgba(255,255,255,0.65);}
-.tooltip{position:absolute;background:#1e2333;border:1px solid rgba(255,255,255,0.14);border-radius:var(--radius);padding:9px 12px;font-size:12px;pointer-events:none;z-index:100;min-width:200px;max-width:240px;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+.tooltip{position:absolute;background:#1e2333;border:1px solid rgba(255,255,255,0.14);border-radius:var(--radius);padding:10px 13px;font-size:12px;pointer-events:none;z-index:1000;min-width:210px;max-width:250px;display:none;box-shadow:0 6px 24px rgba(0,0,0,0.6);}
 .tooltip-zip{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text);}
 .tooltip-row{display:flex;justify-content:space-between;gap:12px;color:var(--text2);margin-top:2px;}
 .tooltip-val{font-weight:500;color:var(--text);}
@@ -66,7 +66,7 @@ html,body{height:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;ba
 .q-score-num{font-size:13px;font-weight:600;}
 .q-score-bar-bg{width:48px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:3px;margin-left:auto;}
 .q-score-bar{height:4px;border-radius:2px;}
-.detail-panel{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface2);}
+.detail-panel{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface2);max-height:55%;overflow-y:auto;}
 .detail-inner{padding:14px 16px;}
 .detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
 .detail-zip{font-size:16px;font-weight:700;color:var(--text);}
@@ -87,6 +87,18 @@ html,body{height:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;ba
 .act-btn-secondary{font-size:11px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;}
 .no-select{font-size:12px;color:var(--text3);text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:6px;}
 </style>
+
+    <!-- Leaflet deps (for embedded map) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <style>
+      .leaflet-container { background: #0d1117 !important; font-size:1rem; }
+      .leaflet-control-layers { background:#1e2333!important;border:1px solid rgba(255,255,255,0.14)!important;color:#e8eaf0!important; }
+      .leaflet-control-layers label { color:#9ba3bc!important; }
+      .leaflet-bar a { background:#1e2333!important;border-color:rgba(255,255,255,0.14)!important;color:#e8eaf0!important; }
+      .leaflet-control-attribution { background:rgba(15,17,23,0.8)!important;color:#5c6480!important; }
+      .leaflet-control-attribution a { color:#4a9eff!important; }
+    </style>
 </head>
 <body>
 <div class="app">
@@ -103,8 +115,7 @@ html,body{height:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;ba
     <div class="metric-chip"><div class="metric-chip-val" style="color:var(--green);">83.0</div><div class="metric-chip-label">Highest LE (ZIP 32266)</div></div>
     <div class="metric-chip"><div class="metric-chip-val" style="color:var(--orange);">98K</div><div class="metric-chip-label">People in crisis ZIPs</div></div>
     <div class="metric-chip" style="padding:0;display:flex;">
-      <button onclick="openAuthModal()" id="loginBtn" style="height:100%;padding:8px 14px;border-radius:0;border:none;border-left:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-weight:500;font-size:11px;white-space:nowrap;display:flex;align-items:center;gap:5px;">Sign in</button>
-      <button onclick="handleRiskClick()" style="height:100%;padding:8px 16px;border-radius:0;border:none;border-left:0.5px solid var(--border);background:var(--blue-bg);color:var(--blue-text);cursor:pointer;font-weight:600;font-size:11px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;">Personal Risk Assessment <span style="font-size:13px;">↗</span></button>
+      <button onclick="openRiskModal()" style="height:100%;padding:8px 16px;border-radius:0;border:none;border-left:1px solid var(--border);background:var(--blue-bg);color:var(--blue-text);cursor:pointer;font-weight:600;font-size:11px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;">Personal Risk Assessment <span style="font-size:13px;">↗</span></button>
     </div>
   </div>
 </div>
@@ -123,12 +134,8 @@ html,body{height:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;ba
 </div>
 <div class="main">
   <div class="map-panel">
-    <div class="map-container" id="mapContainer" style="cursor:default;padding:0;position:relative;">
-      <iframe id="mapIframe"
-        src="map.html"
-        style="width:100%;height:100%;border:none;display:block;"
-        allowfullscreen>
-      </iframe>
+    <div class="map-container" id="mapContainer" style="cursor:default;padding:0;position:relative;isolation:isolate;">
+      <div id="leafletMapWrap" style="width:100%;height:100%;"></div>
       <div class="tooltip" id="tooltip"></div>
     </div>
   </div>
@@ -275,7 +282,7 @@ function buildTooltipHTML(d, layer) {
     const dispVal = m.suffix==='%'?(typeof m.val==='number'?m.val+'%':m.val):(typeof m.val==='number'?m.val.toFixed(2):m.val);
     return `<div style="margin-top:4px;">
       <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:2px;">
-        <span>${m.label}</span><span style="font-weight:600;color:#1c1c1a;">${dispVal}${m.suffix&&!dispVal.endsWith('%')?'':''}</span>
+        <span>${m.label}</span><span style="font-weight:600;color:var(--text);">${dispVal}${m.suffix&&!dispVal.endsWith('%')?'':''}</span>
       </div>
       <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;"><div style="height:3px;width:${barW}%;background:${barCol};border-radius:2px;"></div></div>
     </div>`;
@@ -292,51 +299,64 @@ function showTooltip(e,d,layer){tooltip.innerHTML=buildTooltipHTML(d,layer);tool
 function positionTooltip(e){const rect=mapContainer.getBoundingClientRect();let left=e.clientX-rect.left+14,top=e.clientY-rect.top+14;if(left+180>rect.width)left=e.clientX-rect.left-184;if(top+120>rect.height)top=e.clientY-rect.top-124;tooltip.style.left=left+'px';tooltip.style.top=top+'px';}
 function topMetrics(d){
   const cands=[
-    {label:'Uninsured',val:d.uninsured,pct:d.uninsured,suffix:'%'},
-    {label:'Poverty',val:d.poverty,pct:d.poverty,suffix:'%'},
-    {label:'High BP',val:d.bp,pct:d.bp,suffix:'%'},
-    {label:'Disability',val:d.disability,pct:d.disability,suffix:'%'},
-    {label:'No leisure',val:d.no_leisure,pct:d.no_leisure,suffix:'%'},
-    {label:'Smoking',val:d.smoking,pct:d.smoking,suffix:'%'},
-    {label:'Depression',val:d.depression,pct:d.depression,suffix:'%'},
-    {label:'Poor phys.',val:d.poor_physical,pct:d.poor_physical,suffix:'%'},
-    {label:'Food insec.',val:d.food,pct:d.food,suffix:'%'},
-  ].filter(c=>c.val!==null).sort((a,b)=>b.pct-a.pct).slice(0,2);
+    {label:'Uninsured',   val:d.uninsured,    norm:d.uninsured!=null?d.uninsured/28:null,        suffix:'%'},
+    {label:'Poverty',     val:d.poverty,      norm:d.poverty!=null?d.poverty/38:null,            suffix:'%'},
+    {label:'High BP',     val:d.bp,           norm:d.bp!=null?d.bp/52:null,                      suffix:'%'},
+    {label:'Disability',  val:d.disability,   norm:d.disability!=null?d.disability/49:null,      suffix:'%'},
+    {label:'No leisure',  val:d.no_leisure,   norm:d.no_leisure!=null?d.no_leisure/45:null,      suffix:'%'},
+    {label:'Smoking',     val:d.smoking,      norm:d.smoking!=null?d.smoking/32:null,            suffix:'%'},
+    {label:'Depression',  val:d.depression,   norm:d.depression!=null?d.depression/23:null,      suffix:'%'},
+    {label:'Poor phys.',  val:d.poor_physical,norm:d.poor_physical!=null?d.poor_physical/23:null,suffix:'%'},
+    {label:'Food insec.', val:d.food,         norm:d.food!=null?d.food/87:null,                  suffix:'%'},
+  ].filter(c=>c.norm!=null).sort((a,b)=>b.norm-a.norm).slice(0,2);
   return cands;
 }
 function drawQueue(){
-  const list=document.getElementById('queueList');
-  list.innerHTML=sorted.map((d,i)=>{
-    const lc=heatColor(layers.le.get(d));
-    const rc=heatColor(1-d.risk/100);
-    const isActive=d.zip===selectedZip;
-    const pop=d.pop!==null?(d.pop>=1000?(d.pop/1000).toFixed(0)+'K':d.pop):'—';
-    const top=topMetrics(d);
-    const tagHtml=top.map(m=>`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:rgba(255,255,255,0.08);color:var(--text2);white-space:nowrap;">${m.label} ${m.val}${m.suffix}</span>`).join('');
-    // SVG circle sized by population (14–28px diameter)
-    const maxP=maxPop;
-    const r=Math.round(7+Math.sqrt(d.pop/maxP)*7);
-    const dia=r*2;
-    const circSvg=`<svg width="${dia}" height="${dia}" viewBox="0 0 ${dia} ${dia}" style="flex-shrink:0;display:block;">
-      <circle cx="${r}" cy="${r}" r="${r-1}" fill="${lc}" fill-opacity="${isActive?1:0.82}" stroke="${isActive?'#1c1c1a':'rgba(255,255,255,0.5)'}" stroke-width="${isActive?1.5:0.8}"/>
-      <text x="${r}" y="${r+1}" text-anchor="middle" dominant-baseline="central" font-size="${Math.max(5,Math.min(r*0.55,8))}" font-weight="${isActive?700:500}" fill="white" font-family="Helvetica Neue,Arial,sans-serif">${d.zip.slice(-3)}</text>
-    </svg>`;
-    return `<div class="q-row${isActive?' active':''}" onclick="selectZip('${d.zip}')" style="align-items:center;gap:8px;padding:7px 12px;">
-      <span class="q-rank">${i+1}</span>
-      ${circSvg}
-      <div class="q-info" style="min-width:0;flex:1;">
-        <div style="display:flex;align-items:baseline;gap:6px;">
-          <span class="q-zip-name">${d.zip}</span>
-          <span style="font-size:9px;color:var(--text3);">${pop} pop</span>
-        </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px;">${tagHtml}</div>
-        <div class="q-sub" style="margin-top:2px;">${na(d.le,' yrs LE')} · LE rank #${i+1}</div>
-      </div>
-      <div class="q-score-col">
-        <div class="q-score-num" style="color:${rc};">${d.risk}</div>
-        <div class="q-score-bar-bg"><div class="q-score-bar" style="width:${d.risk}%;background:${rc};"></div></div>
-      </div>
-    </div>`;
+  const list = document.getElementById('queueList');
+  list.innerHTML = sorted.map((d,i) => {
+    const lc       = heatColor(layers[currentLayer].get(d));
+    const rc       = heatColor(1 - d.risk / 100);
+    const isActive = d.zip === selectedZip;
+    const pop      = d.pop !== null ? (d.pop >= 1000 ? (d.pop/1000).toFixed(0)+'K' : d.pop) : '—';
+    const top      = topMetrics(d);
+    const tier     = d.risk>=75?'Critical':d.risk>=55?'High':d.risk>=35?'Moderate':'Low';
+    const tierCol  = d.risk>=75?'#ff7875':d.risk>=55?'#ffc069':d.risk>=35?'#52c41a':'#69b1ff';
+
+    // Circle sized by population (min 13, max 26 radius)
+    const r   = Math.round(7 + Math.sqrt(d.pop / maxPop) * 9);
+    const dia = r * 2;
+    const fs  = Math.max(5, Math.min(r * 0.52, 9));
+    const circSvg = '<svg width="'+dia+'" height="'+dia+'" viewBox="0 0 '+dia+' '+dia+'" style="flex-shrink:0;display:block;">'
+      +'<circle cx="'+r+'" cy="'+r+'" r="'+(r-1.5)+'" fill="'+lc+'" fill-opacity="'+(isActive?1:0.85)+'" '
+      +'stroke="'+(isActive?'#ffffff':'rgba(255,255,255,0.45)')+'" stroke-width="'+(isActive?2:0.8)+'"/>'
+      +'<text x="'+r+'" y="'+(r+0.5)+'" text-anchor="middle" dominant-baseline="central" font-size="'+fs+'" '
+      +'font-weight="'+(isActive?700:500)+'" fill="white" font-family="Helvetica Neue,Arial,sans-serif">'+d.zip.slice(-3)+'</text>'
+      +'</svg>';
+
+    const tagHtml = top.map(m =>
+      '<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,0.07);'
+      +'color:var(--text2);white-space:nowrap;border:1px solid rgba(255,255,255,0.08);">'
+      +m.label+' <strong style="color:var(--text);">'+m.val+m.suffix+'</strong></span>'
+    ).join('');
+
+    return '<div class="q-row'+(isActive?' active':'')+'" onclick="selectZip(\'' + d.zip + '\')" '
+      +'style="display:flex;align-items:center;gap:10px;padding:8px 12px;">'
+      +'<span class="q-rank">'+( i+1)+'</span>'
+      + circSvg
+      +'<div class="q-info" style="min-width:0;flex:1;">'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
+          +'<span class="q-zip-name">'+d.zip+'</span>'
+          +'<span style="font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,0.07);color:'+tierCol+';">'+tier+'</span>'
+          +'<span style="font-size:9px;color:var(--text3);">'+pop+'</span>'
+        +'</div>'
+        +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;">'+tagHtml+'</div>'
+        +'<div class="q-sub" style="margin-top:2px;">'+na(d.le,' yrs LE')+' · '+na(d.checkup,'% checkup')+'</div>'
+      +'</div>'
+      +'<div class="q-score-col" style="text-align:right;flex-shrink:0;">'
+        +'<div class="q-score-num" style="color:'+rc+';">'+d.risk+'</div>'
+        +'<div class="q-score-bar-bg"><div class="q-score-bar" style="width:'+d.risk+'%;background:'+rc+';"></div></div>'
+      +'</div>'
+      +'</div>';
   }).join('');
 }
 function drawDetail(zip){
@@ -347,6 +367,14 @@ function drawDetail(zip){
   const tl=d.risk>=75?'Critical':d.risk>=55?'High':d.risk>=35?'Moderate':'Low',tc=d.risk>=75?'var(--red)':d.risk>=55?'var(--orange)':'var(--green)',tb=d.risk>=75?'var(--red-bg)':d.risk>=55?'var(--orange-bg)':'var(--green-bg)';
   panel.innerHTML=`<div class="detail-inner"><div class="detail-header"><div><div class="detail-zip">${d.zip} <span style="font-size:11px;font-weight:400;color:var(--text3);">rank #${rank} of ${Z.length}</span></div><span style="font-size:10px;padding:2px 8px;border-radius:12px;background:${tb};color:${tc};font-weight:500;">${tl} . Aid score ${d.risk||'N/A'}</span></div><button class="detail-close" onclick="clearSelect()">x close</button></div><div class="stat-grid"><div class="stat-box"><div class="stat-label">Life exp.</div><div class="stat-val" style="color:${lc};">${na(d.le,'')}</div></div><div class="stat-box"><div class="stat-label">Uninsured</div><div class="stat-val" style="color:var(--red);">${na(d.uninsured,'%')}</div></div><div class="stat-box"><div class="stat-label">Poverty</div><div class="stat-val" style="color:var(--red);">${na(d.poverty,'%')}</div></div><div class="stat-box"><div class="stat-label">Population</div><div class="stat-val">${d.pop!==null?(d.pop/1000).toFixed(0)+'K':'N/A'}</div></div></div><div class="factors-title">Contributing risk factors</div>${factors.map(f=>`<div class="factor-row"><span class="factor-label">${f.label}</span><div class="factor-bar-bg">${f.v?`<div class="factor-bar" style="width:${f.pct}%;background:${f.col};"></div>`:`<span style="font-size:10px;color:var(--text3);line-height:4px;">N/A</span>`}</div><span class="factor-val">${f.val}</span></div>`).join('')}<div class="actions-row"></div></div>`;
 }
+function openRiskModal(){
+  const el=document.getElementById('riskOverlay')||document.querySelector('.prm-overlay');
+  if(el) el.classList.add('open');
+}
+function closeRiskModal(){
+  const el=document.getElementById('riskOverlay')||document.querySelector('.prm-overlay');
+  if(el) el.classList.remove('open');
+}
 function selectZip(zip){
   if(selectedZip===zip){clearSelect();return;}
   selectedZip=zip;
@@ -354,15 +382,12 @@ function selectZip(zip){
   const idx=sorted.findIndex(d=>d.zip===zip);
   const rows=document.querySelectorAll('.q-row');
   if(rows[idx])rows[idx].scrollIntoView({block:'nearest',behavior:'smooth'});
-  iframeSelectZip(zip);
+  refreshMapStyles(); panMapToZip(zip);
 }
 function clearSelect(){
   selectedZip=null;
-  drawMap();drawQueue();drawDetail(null);
-  iframeSelectZip(null);
+    if(el) el.classList.remove('open');
 }
-function toggleLabels(){showLabelFlag=!showLabelFlag;document.getElementById('showLabels').classList.toggle('active',showLabelFlag);drawMap();}
-document.querySelectorAll('.layer-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.layer-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentLayer=btn.dataset.layer;drawMap();});});
 drawMap();drawQueue();
 </script>
 <!-- Personal Risk Modal -->
@@ -396,89 +421,12 @@ drawMap();drawQueue();
 .prm-bar-fill{height:5px;border-radius:3px;transition:width .4s;}
 .prm-bar-val{font-size:11px;color:var(--text);font-weight:500;}
 .prm-compare{font-size:11px;color:var(--text2);padding-top:6px;border-top:1px solid var(--border);}
-/* ── Auth modal ──────────────────────────────────────────────── */
-.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:600;display:none;align-items:center;justify-content:center;}
-.auth-overlay.open{display:flex;}
-.auth-box{background:var(--surface);border-radius:var(--radius-lg);width:min(420px,96vw);overflow:hidden;border:1px solid var(--border2);box-shadow:0 8px 40px rgba(0,0,0,0.5);}
-.auth-tabs{display:flex;border-bottom:1px solid var(--border);}
-.auth-tab{flex:1;padding:13px;font-size:12px;font-weight:500;text-align:center;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .15s;}
-.auth-tab.active{color:var(--blue-text);background:var(--blue-bg);font-weight:600;}
-.auth-body{padding:24px 24px 20px;}
-.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
-.auth-field label{font-size:11px;font-weight:500;color:var(--text2);}
-.auth-field input{font-size:12px;padding:8px 11px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none;transition:border-color .15s;}
-.auth-field input:focus{border-color:var(--blue);}
-.auth-error{font-size:11px;color:var(--red-text);background:var(--red-bg);padding:7px 10px;border-radius:6px;margin-bottom:12px;display:none;}
-.auth-error.show{display:block;}
-.auth-submit{width:100%;padding:10px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;transition:opacity .15s;}
-.auth-submit:hover{opacity:0.88;}
-.auth-divider{text-align:center;font-size:10px;color:var(--text3);margin:14px 0;position:relative;}
-.auth-divider::before{content:'';position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--border);}
-.auth-divider span{background:var(--surface);padding:0 8px;position:relative;}
-.auth-footer{font-size:11px;color:var(--text2);text-align:center;padding:0 24px 20px;}
-.auth-footer a{color:var(--blue-text);cursor:pointer;text-decoration:none;}
-.auth-footer a:hover{text-decoration:underline;}
-/* user badge in header */
-.user-badge{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:background .15s;}
-.user-badge:hover{background:var(--bg);}
-.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
-.user-name{font-size:11px;font-weight:500;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
-.user-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,0.4);z-index:200;min-width:160px;overflow:hidden;}
-.user-menu-item{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--text);transition:background .1s;}
-.user-menu-item:hover{background:var(--surface2);}
-.user-menu-item.danger{color:var(--red-text);}
-.user-menu-sep{height:1px;background:var(--border);margin:3px 0;}
-.auth-gate{padding:28px 24px;text-align:center;}
-.auth-gate-icon{font-size:32px;margin-bottom:12px;}
-.auth-gate-title{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text);}
-.auth-gate-sub{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
-.auth-gate-btns{display:flex;gap:8px;justify-content:center;}
-.auth-gate-btn-primary{padding:8px 20px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:600;cursor:pointer;}
-.auth-gate-btn-secondary{padding:8px 20px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;}
+
 
 </style>
 
-<!-- Auth Modal -->
-<div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
-  <div class="auth-box">
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign in</button>
-      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create account</button>
-    </div>
-    <!-- Login panel -->
-    <div id="panelLogin">
-      <div class="auth-body">
-        <div class="auth-error" id="loginError"></div>
-        <div class="auth-field"><label>Email address</label><input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <div class="auth-field"><label>Password</label><input type="password" id="loginPw" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <button class="auth-submit" onclick="doLogin()">Sign in</button>
-      </div>
-      <div class="auth-footer">Don't have an account? <a onclick="switchAuthTab('register')">Create one free</a></div>
-    </div>
-    <!-- Register panel -->
-    <div id="panelRegister" style="display:none;">
-      <div class="auth-body">
-        <div class="auth-error" id="regError"></div>
-        <div class="auth-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" onkeydown="if(event.key==='Enter')doRegister()"></div>
-        <div class="auth-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doRegister()"></div>
-        <div class="auth-field"><label>Password</label><input type="password" id="regPw" placeholder="Choose a password (8+ chars)" onkeydown="if(event.key==='Enter')doRegister()"></div>
-        <div class="auth-field"><label>Confirm password</label><input type="password" id="regPw2" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doRegister()"></div>
-        <button class="auth-submit" onclick="doRegister()">Create account</button>
-      </div>
-      <div class="auth-footer">Already have an account? <a onclick="switchAuthTab('login')">Sign in</a></div>
-    </div>
-  </div>
-</div>
 
-<!-- User menu dropdown (hidden until logged in) -->
-<div id="userMenuDropdown" class="user-menu" style="display:none;position:fixed;top:50px;right:16px;">
-  <div class="user-menu-item" onclick="handleRiskClick()">My Risk Assessment</div>
-  <div class="user-menu-sep"></div>
-  <div class="user-menu-item danger" onclick="doLogout()">Sign out</div>
-</div>
-
-
-<div class="prm-overlay" id="prmOverlay" onclick="if(event.target===this)closeRiskModal()">
+<div class="prm-overlay" id="riskOverlay" onclick="if(event.target===this)closeRiskModal()">
   <div class="prm-box">
     <div class="prm-head">
       <span class="prm-title">Personal health risk assessment</span>
@@ -520,7 +468,6 @@ drawMap();drawQueue();
         <div class="prm-field"><label>Recent checkup (past year)</label><select id="pr-checkup"><option value="">Select…</option><option value="yes">Yes, had a checkup</option><option value="no">No checkup in past year</option></select></div>
       </div>
     </div>
-    <div id="prmHistory" style="display:none;padding:0 20px 12px;font-size:11px;"></div>
     <button class="prm-submit" onclick="calcPersonalRisk()">Calculate my risk score</button>
     <div class="prm-result" id="prmResult">
       <div class="prm-score-row">
@@ -536,465 +483,283 @@ drawMap();drawQueue();
   </div>
 </div>
 
+
+
+
+
+
 <script>
-// ── Auth helpers ────────────────────────────────────────────────
-var currentUser = null;
+// ── Personal Risk Assessment ─────────────────────────────────────────────
+function calcPersonalRisk() {
+  var age      = document.getElementById('pr-age').value;
+  var insured  = document.getElementById('pr-insured').value;
+  var income   = document.getElementById('pr-income').value;
+  var food     = document.getElementById('pr-food').value;
+  var disability = document.getElementById('pr-disability').value;
+  var bp       = document.getElementById('pr-bp').value;
+  var chol     = document.getElementById('pr-chol').value;
+  var smoke    = document.getElementById('pr-smoke').value;
+  var physdays = document.getElementById('pr-physdays').value;
+  var leisure  = document.getElementById('pr-leisure').value;
+  var dep      = document.getElementById('pr-dep').value;
+  var mentdays = document.getElementById('pr-mentdays').value;
+  var checkup  = document.getElementById('pr-checkup').value;
 
-function getAccounts(){
-  try{ return JSON.parse(localStorage.getItem('jhe_accounts')||'{}'); }
-  catch(e){ return {}; }
-}
-function saveAccounts(obj){
-  localStorage.setItem('jhe_accounts', JSON.stringify(obj));
-}
-function getSession(){
-  try{ return JSON.parse(sessionStorage.getItem('jhe_session')||'null'); }
-  catch(e){ return null; }
-}
-function saveSession(user){
-  sessionStorage.setItem('jhe_session', JSON.stringify(user));
-}
-function clearSession(){
-  sessionStorage.removeItem('jhe_session');
-}
-function hashPw(pw){
-  // Simple deterministic hash (not cryptographic - demo only)
-  var h = 0;
-  for(var i=0;i<pw.length;i++){ h = Math.imul(31,h)+pw.charCodeAt(i)|0; }
-  return h.toString(36);
-}
+  var factors = [];
 
-function initAuth(){
-  var session = getSession();
-  if(session){ currentUser = session; renderUserBadge(); }
-}
-
-function renderUserBadge(){
-  var btn = document.getElementById('loginBtn');
-  if(!btn) return;
-  if(currentUser){
-    var initials = currentUser.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
-    btn.innerHTML = '<div class="user-avatar">'+initials+'</div><span class="user-name">'+currentUser.name.split(' ')[0]+'</span>';
-    btn.style.background = 'var(--surface2)';
-    btn.style.border = '0.5px solid var(--border)';
-    btn.style.borderRadius = '20px';
-    btn.style.padding = '4px 10px 4px 4px';
-    btn.onclick = function(){ toggleUserMenu(); };
-  } else {
-    btn.innerHTML = 'Sign in';
-    btn.style.background = 'transparent';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '0';
-    btn.style.padding = '8px 14px';
-    btn.onclick = function(){ openAuthModal(); };
+  if (age) {
+    var leRisk = Math.min(1, Math.max(0, (age - 30) / 50));
+    factors.push({label:'Age (LE proxy)', pct:Math.round(leRisk*100), col:'#E24B4A', w:0.10, v:leRisk});
   }
-}
-
-function openAuthModal(tab){
-  switchAuthTab(tab||'login');
-  document.getElementById('authOverlay').classList.add('open');
-  setTimeout(function(){
-    var f = document.getElementById(tab==='register'?'regName':'loginEmail');
-    if(f) f.focus();
-  }, 80);
-}
-function closeAuthModal(){
-  document.getElementById('authOverlay').classList.remove('open');
-  document.getElementById('loginError').classList.remove('show');
-  document.getElementById('regError').classList.remove('show');
-}
-function switchAuthTab(tab){
-  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
-  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
-  document.getElementById('panelLogin').style.display = tab==='login'?'':'none';
-  document.getElementById('panelRegister').style.display = tab==='register'?'':'none';
-}
-
-function doLogin(){
-  var email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  var pw = document.getElementById('loginPw').value;
-  var errEl = document.getElementById('loginError');
-  errEl.classList.remove('show');
-  if(!email||!pw){ errEl.textContent='Please enter your email and password.'; errEl.classList.add('show'); return; }
-  var accounts = getAccounts();
-  var user = accounts[email];
-  if(!user||user.pwHash!==hashPw(pw)){ errEl.textContent='Incorrect email or password.'; errEl.classList.add('show'); return; }
-  currentUser = {email:email, name:user.name};
-  saveSession(currentUser);
-  closeAuthModal();
-  renderUserBadge();
-}
-
-function doRegister(){
-  var name = document.getElementById('regName').value.trim();
-  var email = document.getElementById('regEmail').value.trim().toLowerCase();
-  var pw = document.getElementById('regPw').value;
-  var pw2 = document.getElementById('regPw2').value;
-  var errEl = document.getElementById('regError');
-  errEl.classList.remove('show');
-  if(!name){ errEl.textContent='Please enter your name.'; errEl.classList.add('show'); return; }
-  if(!email||!email.includes('@')){ errEl.textContent='Please enter a valid email.'; errEl.classList.add('show'); return; }
-  if(pw.length<8){ errEl.textContent='Password must be at least 8 characters.'; errEl.classList.add('show'); return; }
-  if(pw!==pw2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
-  var accounts = getAccounts();
-  if(accounts[email]){ errEl.textContent='An account with this email already exists.'; errEl.classList.add('show'); return; }
-  // Save account to the database
-  accounts[email] = {name:name, pwHash:hashPw(pw), createdAt:new Date().toISOString()};
-  saveAccounts(accounts);
-  // Store for the success button, then show success screen
-  window._regEmail = email;
-  document.getElementById('panelRegister').innerHTML =
-    '<div style="padding:32px 24px;text-align:center;">'
-    + '<div style="font-size:36px;margin-bottom:12px;">&#10003;</div>'
-    + '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">Account created!</div>'
-    + '<div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.5;">Your account for <strong>' + email + '</strong> is ready.<br>Sign in with your credentials to continue.</div>'
-    + '<button class="auth-submit" onclick="switchToLoginPrefilled(window._regEmail)">Go to sign in</button>'
-    + '</div>';
-}
-
-function switchToLoginPrefilled(email){
-  // Rebuild the register panel in case user clicks back
-  var kd = "if(event.key===&apos;Enter&apos;)doRegister()";
-  document.getElementById('panelRegister').innerHTML =
-    '<div class="auth-body">'
-    + '<div class="auth-error" id="regError"></div>'
-    + '<div class="auth-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" onkeydown="' + kd + '"></div>'
-    + '<div class="auth-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com" onkeydown="' + kd + '"></div>'
-    + '<div class="auth-field"><label>Password</label><input type="password" id="regPw" placeholder="Choose a password (8+ chars)" onkeydown="' + kd + '"></div>'
-    + '<div class="auth-field"><label>Confirm password</label><input type="password" id="regPw2" placeholder="Repeat password" onkeydown="' + kd + '"></div>'
-    + '<button class="auth-submit" onclick="doRegister()">Create account</button>'
-    + '</div>'
-    + '<div class="auth-footer">Already have an account? <a onclick="switchAuthTab(&apos;login&apos;)">Sign in</a></div>';
-  switchAuthTab('login');
-  var emailEl = document.getElementById('loginEmail');
-  if(emailEl){ emailEl.value = email; }
-  var pwEl = document.getElementById('loginPw');
-  if(pwEl){ pwEl.focus(); }
-}
-
-function doLogout(){
-  currentUser = null;
-  clearSession();
-  renderUserBadge();
-  hideUserMenu();
-  document.getElementById('prmOverlay').classList.remove('open');
-}
-
-function toggleUserMenu(){
-  var m = document.getElementById('userMenuDropdown');
-  m.style.display = m.style.display==='none' ? 'block' : 'none';
-}
-function hideUserMenu(){
-  document.getElementById('userMenuDropdown').style.display='none';
-}
-document.addEventListener('click', function(e){
-  if(!e.target.closest('#loginBtn')&&!e.target.closest('#userMenuDropdown')) hideUserMenu();
-});
-
-// ── Risk modal ──────────────────────────────────────────────────
-function handleRiskClick(){
-  if(!currentUser){
-    openAuthModal('login');
-    return;
+  if (insured) {
+    var v = insured === 'no' ? 1 : 0;
+    factors.push({label:'No insurance', pct:Math.round(v*100), col:'#EF9F27', w:0.08, v:v});
   }
-  openRiskModal();
-}
-
-function openRiskModal(){
-  document.getElementById('prmOverlay').classList.add('open');
-  loadPastEntries();
-}
-function closeRiskModal(){
-  document.getElementById('prmOverlay').classList.remove('open');
-}
-
-function loadPastEntries(){
-  var el=document.getElementById('prmHistory');
-  if(!el||!currentUser)return;
-  try{
-    var prefix='pra:'+currentUser.email+':';
-    var keys=Object.keys(localStorage).filter(function(k){return k.startsWith(prefix);}).sort().reverse().slice(0,10);
-    if(!keys.length){el.style.display='none';return;}
-    var entries=keys.map(function(k){
-      try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e2){return null;}
-    });
-    var valid=entries.filter(Boolean);
-    if(!valid.length){el.style.display='none';return;}
-    el.style.display='block';
-    el.innerHTML='<div class="prm-section" style="margin-bottom:8px;">Your past assessments ('+valid.length+')</div>'+valid.map(function(e){
-      var tc=e.tier==='Critical'?'#A32D2D':e.tier==='High'?'#633806':e.tier==='Moderate'?'#085041':'#0C447C';
-      var bg=e.tier==='Critical'?'#FCEBEB':e.tier==='High'?'#FAEEDA':e.tier==='Moderate'?'#E1F5EE':'#E6F1FB';
-      var d=new Date(e.timestamp);
-      var dt=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;"><span style="color:var(--text2);">'+dt+'</span><span style="display:flex;gap:6px;align-items:center;"><span style="font-weight:600;color:'+tc+';">Score '+e.score+'</span><span style="padding:1px 7px;border-radius:10px;background:'+bg+';color:'+tc+';font-size:10px;">'+e.tier+'</span><span style="color:var(--text3);">~ '+e.nearestZip+'</span></span></div>';
-    }).join('');
-  }catch(e){el.style.display='none';}
-}
-
-function calcPersonalRisk(){
-  var age=parseInt(document.getElementById('pr-age').value)||null;
-  var insured=document.getElementById('pr-insured').value;
-  var income=document.getElementById('pr-income').value;
-  var food=document.getElementById('pr-food').value;
-  var disability=document.getElementById('pr-disability').value;
-  var bp=document.getElementById('pr-bp').value;
-  var chol=document.getElementById('pr-chol').value;
-  var smoke=document.getElementById('pr-smoke').value;
-  var physdays=document.getElementById('pr-physdays').value;
-  var leisure=document.getElementById('pr-leisure').value;
-  var dep=document.getElementById('pr-dep').value;
-  var mentdays=document.getElementById('pr-mentdays').value;
-  var checkup=document.getElementById('pr-checkup').value;
-
-  var factors=[];
-
-  if(age!==null){
-    var leRisk=Math.min(1,Math.max(0,(age-30)/50));
-    factors.push({label:'Age (LE proxy)',pct:Math.round(leRisk*100),col:'#E24B4A',w:0.10,v:leRisk});
+  if (income) {
+    var im = {under25:1, '25to50':0.72, '50to75':0.45, '75to100':0.22, over100:0};
+    var iv = im[income];
+    if (iv != null) factors.push({label:'Low income', pct:Math.round(iv*100), col:'#EF9F27', w:0.09, v:iv});
   }
-  if(insured){
-    var v=insured==='no'?1:0;
-    factors.push({label:'No insurance',pct:Math.round(v*100),col:'#EF9F27',w:0.08,v:v});
+  if (food) {
+    var fm = {hard:1, moderate:0.5, easy:0};
+    var fv = fm[food];
+    if (fv != null) factors.push({label:'Food access difficulty', pct:Math.round(fv*100), col:'#639922', w:0.05, v:fv});
   }
-  if(income){
-    var im={'under25':1,'25to50':0.72,'50to75':0.45,'75to100':0.22,'over100':0};
-    var iv=im[income];
-    if(iv!=null) factors.push({label:'Low income',pct:Math.round(iv*100),col:'#EF9F27',w:0.09,v:iv});
+  if (disability) {
+    var dv = disability === 'yes' ? 1 : 0;
+    factors.push({label:'Disability', pct:Math.round(dv*100), col:'#E24B4A', w:0.08, v:dv});
   }
-  if(food){
-    var fm={hard:1,moderate:0.5,easy:0};
-    var fv=fm[food];
-    if(fv!=null) factors.push({label:'Food access difficulty',pct:Math.round(fv*100),col:'#639922',w:0.05,v:fv});
+  if (bp) {
+    var bpv = bp === 'yes' ? 1 : 0;
+    factors.push({label:'High blood pressure', pct:Math.round(bpv*100), col:'#E24B4A', w:0.09, v:bpv});
   }
-  if(disability){
-    var dv=disability==='yes'?1:0;
-    factors.push({label:'Disability',pct:Math.round(dv*100),col:'#E24B4A',w:0.08,v:dv});
+  if (chol) {
+    var cv = chol === 'yes' ? 1 : 0;
+    factors.push({label:'High cholesterol', pct:Math.round(cv*100), col:'#639922', w:0.05, v:cv});
   }
-  if(bp){
-    var bpv=bp==='yes'?1:0;
-    factors.push({label:'High blood pressure',pct:Math.round(bpv*100),col:'#E24B4A',w:0.09,v:bpv});
+  if (smoke) {
+    var sv = smoke === 'yes' ? 1 : 0;
+    factors.push({label:'Regular smoking', pct:Math.round(sv*100), col:'#EF9F27', w:0.06, v:sv});
   }
-  if(chol){
-    var cv=chol==='yes'?1:0;
-    factors.push({label:'High cholesterol',pct:Math.round(cv*100),col:'#639922',w:0.05,v:cv});
+  if (physdays) {
+    var pm = {'0':0, '1':0.2, '7':0.5, '14':0.75, '21':1};
+    var pv = pm[physdays];
+    if (pv != null) factors.push({label:'Poor physical health days', pct:Math.round(pv*100), col:'#EF9F27', w:0.07, v:pv});
   }
-  if(smoke){
-    var sv=smoke==='yes'?1:0;
-    factors.push({label:'Regular smoking',pct:Math.round(sv*100),col:'#EF9F27',w:0.06,v:sv});
+  if (leisure) {
+    var lm = {regular:0, some:0.5, none:1};
+    var lv = lm[leisure];
+    if (lv != null) factors.push({label:'No leisure activity', pct:Math.round(lv*100), col:'#EF9F27', w:0.07, v:lv});
   }
-  if(physdays){
-    var pm={'0':0,'1':0.2,'7':0.5,'14':0.75,'21':1};
-    var pv=pm[physdays];
-    if(pv!=null) factors.push({label:'Poor physical health',pct:Math.round(pv*100),col:'#EF9F27',w:0.07,v:pv});
+  if (dep) {
+    var dpv = dep === 'yes' ? 1 : 0;
+    factors.push({label:'Depression / anxiety', pct:Math.round(dpv*100), col:'#885AB1', w:0.06, v:dpv});
   }
-  if(leisure){
-    var lm={regular:0,some:0.5,none:1};
-    var lv=lm[leisure];
-    if(lv!=null) factors.push({label:'No leisure activity',pct:Math.round(lv*100),col:'#EF9F27',w:0.07,v:lv});
+  if (mentdays) {
+    var mm = {'0':0, '1':0.2, '7':0.5, '14':0.75, '21':1};
+    var mv = mm[mentdays];
+    if (mv != null) factors.push({label:'Poor mental health days', pct:Math.round(mv*100), col:'#885AB1', w:0.06, v:mv});
   }
-  if(dep){
-    var dpv=dep==='yes'?1:0;
-    factors.push({label:'Depression / anxiety',pct:Math.round(dpv*100),col:'#885AB1',w:0.06,v:dpv});
-  }
-  if(mentdays){
-    var mm={'0':0,'1':0.2,'7':0.5,'14':0.75,'21':1};
-    var mv=mm[mentdays];
-    if(mv!=null) factors.push({label:'Poor mental health',pct:Math.round(mv*100),col:'#885AB1',w:0.06,v:mv});
-  }
-  if(checkup){
-    var ckv=checkup==='no'?1:0;
-    factors.push({label:'No recent checkup',pct:Math.round(ckv*100),col:'#1D9E75',w:0.08,v:ckv});
+  if (checkup) {
+    var ckv = checkup === 'no' ? 1 : 0;
+    factors.push({label:'No recent checkup', pct:Math.round(ckv*100), col:'#1D9E75', w:0.08, v:ckv});
   }
 
-  if(!factors.length){alert('Please fill in at least one field.');return;}
+  if (!factors.length) { alert('Please fill in at least one field.'); return; }
 
-  var tw=factors.reduce(function(s,f){return s+f.w;},0);
-  var score=Math.round(factors.reduce(function(s,f){return s+f.v*f.w;},0)/tw*100);
+  var tw    = factors.reduce(function(s,f){ return s+f.w; }, 0);
+  var score = Math.round(factors.reduce(function(s,f){ return s+f.v*f.w; }, 0) / tw * 100);
 
-  var tierInfo=score>=75?{label:'Critical',bg:'#FCEBEB',col:'#A32D2D'}:
-               score>=55?{label:'High',bg:'#FAEEDA',col:'#633806'}:
-               score>=35?{label:'Moderate',bg:'#E1F5EE',col:'#085041'}:
-                         {label:'Low',bg:'#E6F1FB',col:'#0C447C'};
+  var tierInfo = score >= 75 ? {label:'Critical', bg:'rgba(226,75,74,0.18)', col:'#ff7875'} :
+                 score >= 55 ? {label:'High',     bg:'rgba(239,159,39,0.18)',col:'#ffc069'} :
+                 score >= 35 ? {label:'Moderate', bg:'rgba(29,158,117,0.18)',col:'#52c41a'} :
+                               {label:'Low',      bg:'rgba(74,158,255,0.15)',col:'#69b1ff'};
 
-  document.getElementById('prmScoreNum').textContent=score;
-  document.getElementById('prmScoreNum').style.color=tierInfo.col;
-  var tier=document.getElementById('prmTier');
-  tier.textContent=tierInfo.label+' risk';
-  tier.style.background=tierInfo.bg;
-  tier.style.color=tierInfo.col;
+  document.getElementById('prmScoreNum').textContent = score;
+  document.getElementById('prmScoreNum').style.color  = tierInfo.col;
+  var tierEl = document.getElementById('prmTier');
+  tierEl.textContent         = tierInfo.label + ' risk';
+  tierEl.style.background    = tierInfo.bg;
+  tierEl.style.color         = tierInfo.col;
 
-  document.getElementById('prmBars').innerHTML=factors.map(function(f){
-    return '<div class="prm-bar-row"><span class="prm-bar-label">'+f.label+'</span><div class="prm-bar-bg"><div class="prm-bar-fill" style="width:'+f.pct+'%;background:'+f.col+';"></div></div><span class="prm-bar-val">'+f.pct+'%</span></div>';
+  document.getElementById('prmBars').innerHTML = factors.map(function(f){
+    return '<div class="prm-bar-row">'
+      +'<span class="prm-bar-label">'+f.label+'</span>'
+      +'<div class="prm-bar-bg"><div class="prm-bar-fill" style="width:'+f.pct+'%;background:'+f.col+';"></div></div>'
+      +'<span class="prm-bar-val">'+f.pct+'%</span>'
+      +'</div>';
   }).join('');
 
-  var scored=Z.filter(function(d){return d.risk>0;}).sort(function(a,b){return b.risk-a.risk;});
-  var above=scored.filter(function(d){return d.risk>score;}).length;
-  var pct=Math.round(above/scored.length*100);
-  var nearest=scored.reduce(function(best,d){return Math.abs(d.risk-score)<Math.abs(best.risk-score)?d:best;},scored[0]);
-  document.getElementById('prmCompare').innerHTML='Your score of <strong>'+score+'</strong> is higher than <strong>'+pct+'%</strong> of Duval County ZIPs. Nearest ZIP match: <strong>'+nearest.zip+'</strong> (score '+nearest.risk+').';
-
-  if(currentUser){
-    var entry={
-      timestamp:new Date().toISOString(),
-      score:score,tier:tierInfo.label,
-      age:document.getElementById('pr-age').value||null,
-      insured:document.getElementById('pr-insured').value||null,
-      income:document.getElementById('pr-income').value||null,
-      food:document.getElementById('pr-food').value||null,
-      disability:document.getElementById('pr-disability').value||null,
-      bp:document.getElementById('pr-bp').value||null,
-      cholesterol:document.getElementById('pr-chol').value||null,
-      smoking:document.getElementById('pr-smoke').value||null,
-      physdays:document.getElementById('pr-physdays').value||null,
-      leisure:document.getElementById('pr-leisure').value||null,
-      depression:document.getElementById('pr-dep').value||null,
-      mentaldays:document.getElementById('pr-mentdays').value||null,
-      checkup:document.getElementById('pr-checkup').value||null,
-      nearestZip:nearest.zip
-    };
-    try{
-      var key='pra:'+currentUser.email+':'+Date.now();
-      localStorage.setItem(key,JSON.stringify(entry));
-      loadPastEntries();
-    }catch(e){console.warn('Storage unavailable',e);}
-  }
+  // Compare to ZIP code population
+  var scored  = Z.filter(function(d){ return d.risk > 0; }).sort(function(a,b){ return b.risk - a.risk; });
+  var above   = scored.filter(function(d){ return d.risk > score; }).length;
+  var pct     = Math.round(above / scored.length * 100);
+  var nearest = scored.reduce(function(best,d){
+    return Math.abs(d.risk - score) < Math.abs(best.risk - score) ? d : best;
+  }, scored[0]);
+  document.getElementById('prmCompare').innerHTML =
+    'Your score of <strong>'+score+'</strong> is higher than <strong>'+pct+'%</strong> of Duval County ZIPs. '
+    +'Nearest ZIP match: <strong>'+nearest.zip+'</strong> (score '+nearest.risk+').';
 
   document.getElementById('prmResult').classList.add('show');
 }
-
-initAuth();
 </script>
 
-
-
-
 <script>
-// ── index.html ↔ map.html cooperation bridge ──────────────────────────────
+// ── Fetch map.html and inject its Leaflet content directly ───────────────
 const MAP_ID     = 'map_7ae74881d29a1f1d1d91ff49853e0eef';
 const GEOJSON_ID = 'geo_json_51031f06aa80ad5ff723a2b347c97240';
 
-function getIframeWin() {
-  const f = document.getElementById('mapIframe');
-  return f ? f.contentWindow : null;
+(function initLeafletMap() {
+  fetch('map.html')
+    .then(function(r) { return r.text(); })
+    .then(function(mapText) {
+      const parser  = new DOMParser();
+      const mapDoc  = parser.parseFromString(mapText, 'text/html');
+
+      // Inject the folium-map div into our wrapper
+      const foliumDiv = mapDoc.querySelector('.folium-map');
+      if (foliumDiv) {
+        document.getElementById('leafletMapWrap').appendChild(
+          document.adoptNode(foliumDiv)
+        );
+      }
+
+      // Run each <script> block from map.html in order, skipping the cooperation bridge
+      const scripts = mapDoc.querySelectorAll('script');
+      function runNext(i) {
+        if (i >= scripts.length) {
+          // All scripts done — now wire our health system
+          setTimeout(wireHealthSystem, 200);
+          return;
+        }
+        const s = scripts[i];
+        const src = s.getAttribute('src');
+        if (src) {
+          // External script — skip (already loaded Leaflet in head)
+          runNext(i + 1);
+          return;
+        }
+        const text = s.textContent || '';
+        // Skip the cooperation bridge script (we replace it)
+        if (text.includes('cooperation bridge') || text.includes('zip_click_handler')) {
+          runNext(i + 1);
+          return;
+        }
+        try {
+          // eslint-disable-next-line no-new-func
+          const fn = new Function(text);
+          fn();
+        } catch(e) {
+          console.warn('map.html script error:', e.message);
+        }
+        runNext(i + 1);
+      }
+      runNext(0);
+    })
+    .catch(function(err) {
+      console.error('Failed to load map.html:', err);
+      document.getElementById('leafletMapWrap').innerHTML =
+        '<div style="color:#ff7875;padding:20px;">Map failed to load. Serve from a local server.</div>';
+    });
+})();
+
+// ── Wire health system to Leaflet once it's ready ────────────────────────
+function wireHealthSystem() {
+  const geoLayer   = window[GEOJSON_ID];
+  const leafletMap = window[MAP_ID];
+
+  if (!geoLayer || !leafletMap) {
+    setTimeout(wireHealthSystem, 150);
+    return;
+  }
+
+  // Unbind folium default tooltip
+  try { geoLayer.eachLayer(function(l) { l.unbindTooltip && l.unbindTooltip(); }); } catch(e) {}
+
+  // Wire every region
+  geoLayer.eachLayer(function(lyr) {
+    const zip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
+    if (!zip) return;
+
+    lyr.on('click', function() { selectZip(zip); });
+
+    lyr.on('mouseover', function(e) {
+      const d = Z.find(function(z) { return z.zip === zip; });
+      if (!d) return;
+      const tt = document.getElementById('tooltip');
+      if (!tt) return;
+      tt.innerHTML = buildTooltipHTML(d, layers[currentLayer]);
+      tt.style.display = 'block';
+      positionTooltipOnMap(e.originalEvent);
+      if (zip !== selectedZip) lyr.setStyle({ fillOpacity: 0.88, weight: 2, color: '#fff' });
+    });
+
+    lyr.on('mousemove', function(e) { positionTooltipOnMap(e.originalEvent); });
+
+    lyr.on('mouseout', function() {
+      const tt = document.getElementById('tooltip');
+      if (tt) tt.style.display = 'none';
+      if (zip !== selectedZip) {
+        const d = Z.find(function(z) { return z.zip === zip; });
+        const col = d ? heatColor(layers[currentLayer].get(d)) : '#555';
+        lyr.setStyle({ fillColor: col, fillOpacity: 0.75, color: 'rgba(255,255,255,0.3)', weight: 0.7 });
+      }
+    });
+  });
+
+  // Apply initial heat map colors
+  refreshMapStyles();
+  console.log('Health system wired to Leaflet ✓');
 }
 
-// ── Called by map.html when it's ready ──────────────────────────────────
-window.onMapIframeReady = function() {
-  console.log('index.html: map.html ready signal received ✓');
-  iframeRefreshStyles();
-};
-
-// ── Called by map.html on region hover ──────────────────────────────────
-window.handleMapHover = function(zip, nativeEvent) {
-  const d = Z.find(z => z.zip === zip);
-  if (!d) return;
-  const tt = document.getElementById('tooltip');
-  if (!tt) return;
-  tt.innerHTML = buildTooltipHTML(d, layers[currentLayer]);
-  tt.style.display = 'block';
-  positionTooltipFromIframe(nativeEvent);
-  // Subtle highlight
-  highlightRegion(zip, true);
-};
-
-window.handleMapHoverMove = function(nativeEvent) {
-  positionTooltipFromIframe(nativeEvent);
-};
-
-window.handleMapHoverEnd = function(zip) {
-  const tt = document.getElementById('tooltip');
-  if (tt) tt.style.display = 'none';
-  if (zip !== selectedZip) highlightRegion(zip, false);
-};
-
-function positionTooltipFromIframe(e) {
-  const tt = document.getElementById('tooltip');
-  const mapCont = document.getElementById('mapContainer');
-  const iRect = document.getElementById('mapIframe').getBoundingClientRect();
-  const cRect = mapCont.getBoundingClientRect();
-  let left = (iRect.left - cRect.left) + e.clientX - iRect.left + 14;
-  let top  = (iRect.top  - cRect.top)  + e.clientY - iRect.top  + 14;
-  if (left + 240 > cRect.width)  left -= 258;
-  if (top  + 180 > cRect.height) top  -= 198;
+function positionTooltipOnMap(e) {
+  const tt   = document.getElementById('tooltip');
+  const wrap = document.getElementById('mapContainer');
+  if (!tt || !wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  let left = e.clientX - rect.left + 14;
+  let top  = e.clientY - rect.top  + 14;
+  if (left + 250 > rect.width)  left -= 264;
+  if (top  + 200 > rect.height) top  -= 214;
   tt.style.left = left + 'px';
   tt.style.top  = top  + 'px';
 }
 
-function highlightRegion(zip, on) {
-  const w = getIframeWin();
-  if (!w || !w[GEOJSON_ID]) return;
-  w[GEOJSON_ID].eachLayer(function(lyr) {
-    const lzip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
-    if (lzip !== zip) return;
-    if (on) {
-      lyr.setStyle({ fillOpacity: 0.85, weight: 2, color: '#fff' });
-    } else {
-      const d = Z.find(z => z.zip === zip);
-      const col = d ? heatColor(layers[currentLayer].get(d)) : '#555';
-      lyr.setStyle({ fillColor: col, fillOpacity: 0.55, color: 'rgba(255,255,255,0.5)', weight: 0.8 });
-    }
-  });
-}
-
-// ── Style all regions by current health layer ────────────────────────────
-function iframeRefreshStyles() {
-  const w = getIframeWin();
-  if (!w || !w[GEOJSON_ID]) return;
-  w[GEOJSON_ID].eachLayer(function(lyr) {
+// ── Style regions by active health layer (heat map) ──────────────────────
+function refreshMapStyles() {
+  const geoLayer = window[GEOJSON_ID];
+  if (!geoLayer) return;
+  let count = 0;
+  geoLayer.eachLayer(function(lyr) {
     const zip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
     if (!zip) return;
-    const d = Z.find(z => z.zip === zip);
+    const d   = Z.find(function(z) { return z.zip === zip; });
+    if (!d) return;
     const isSelected = zip === selectedZip;
-    const col = d ? heatColor(layers[currentLayer].get(d)) : '#555';
+    const col = heatColor(layers[currentLayer].get(d));
     lyr.setStyle({
-      fillColor: col,
-      fillOpacity: isSelected ? 0.92 : 0.55,
-      color: isSelected ? '#ffffff' : 'rgba(255,255,255,0.5)',
-      weight: isSelected ? 3 : 0.8,
+      fillColor:   col,
+      fillOpacity: isSelected ? 0.95 : 0.75,
+      color:       isSelected ? '#ffffff' : 'rgba(255,255,255,0.3)',
+      weight:      isSelected ? 3 : 0.7,
     });
+    count++;
   });
+  console.log('refreshMapStyles: ' + count + ' regions → ' + currentLayer);
 }
 
-// ── Select a ZIP: highlight on map + pan to it ───────────────────────────
-function iframeSelectZip(zip) {
-  const w = getIframeWin();
-  if (!w || !w[GEOJSON_ID]) return;
-  iframeRefreshStyles(); // resets all, then selected gets highlighted
-  if (!zip) return;
-  w[GEOJSON_ID].eachLayer(function(lyr) {
+// ── Pan map to selected ZIP ───────────────────────────────────────────────
+function panMapToZip(zip) {
+  const geoLayer   = window[GEOJSON_ID];
+  const leafletMap = window[MAP_ID];
+  if (!geoLayer || !leafletMap) return;
+  geoLayer.eachLayer(function(lyr) {
     const lzip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
     if (lzip !== zip) return;
-    lyr.setStyle({ fillOpacity: 0.92, weight: 3, color: '#ffffff' });
-    if (lyr.getBounds && w[MAP_ID]) {
-      w[MAP_ID].fitBounds(lyr.getBounds(), { padding: [40, 40], maxZoom: 13 });
-    }
+    if (lyr.getBounds) leafletMap.fitBounds(lyr.getBounds(), { padding:[40,40], maxZoom:13 });
   });
 }
-
-// ── Patch layer buttons to re-style iframe ───────────────────────────────
-document.querySelectorAll('.layer-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() { setTimeout(iframeRefreshStyles, 20); });
-});
-
-// ── postMessage fallback (if same-origin direct access fails) ────────────
-window.addEventListener('message', function(e) {
-  if (!e.data || !e.data.type) return;
-  if (e.data.type === 'mapReady')   { iframeRefreshStyles(); }
-  if (e.data.type === 'zipClick')   { selectZip(e.data.zip); }
-  if (e.data.type === 'zipHoverEnd'){ const tt=document.getElementById('tooltip'); if(tt) tt.style.display='none'; }
-});
-
-// ── Fallback: also try on iframe load event ───────────────────────────────
-document.getElementById('mapIframe').addEventListener('load', function() {
-  // Small delay to let map.html's own scripts finish
-  setTimeout(function() {
-    const w = getIframeWin();
-    if (w && w[GEOJSON_ID]) {
-      iframeRefreshStyles();
-      console.log('index.html: iframe loaded, styles applied ✓');
-    }
-  }, 300);
-});
 </script>
 
 </body>
