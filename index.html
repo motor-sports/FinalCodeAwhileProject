@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jacksonville Health Equity -- Aid Priority System</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2333;
+  --text:#e8eaf0;--text2:#9ba3bc;--text3:#5c6480;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --red:#E24B4A;--orange:#EF9F27;--green:#1D9E75;--blue:#4a9eff;
+  --red-bg:rgba(226,75,74,0.18);--orange-bg:rgba(239,159,39,0.18);--green-bg:rgba(29,158,117,0.18);--blue-bg:rgba(74,158,255,0.15);
+  --red-text:#ff7875;--orange-text:#ffc069;--green-text:#52c41a;--blue-text:#69b1ff;
+  --radius:8px;--radius-lg:12px;
+}
+html,body{height:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-title{font-size:14px;font-weight:600;letter-spacing:-0.01em;color:var(--text);}
+.header-sub{font-size:11px;color:var(--text3);}
+.header-badge{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--red-bg);color:var(--red-text);font-weight:500;}
+.metrics-bar{display:flex;gap:0;}
+.metric-chip{padding:6px 16px;border-right:1px solid var(--border);text-align:center;}
+.metric-chip:last-child{border-right:none;}
+.metric-chip-val{font-size:18px;font-weight:600;line-height:1.1;}
+.metric-chip-label{font-size:10px;color:var(--text3);margin-top:1px;}
+.toolbar{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);}
+.toolbar-label{font-size:11px;color:var(--text3);margin-right:4px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.layer-btn{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.layer-btn:hover{background:var(--surface2);color:var(--text);}
+.layer-btn.active{background:var(--blue-bg);color:var(--blue-text);border-color:rgba(74,158,255,0.35);font-weight:500;}
+.toolbar-sep{flex:1;}
+.show-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;}
+.show-btn.active{background:var(--surface2);color:var(--text);font-weight:500;}
+.main{flex:1;display:grid;grid-template-columns:1fr 360px;min-height:0;overflow:hidden;}
+.map-panel{position:relative;background:#0d1117;overflow:hidden;border-right:1px solid var(--border);}
+.map-container{position:relative;width:100%;height:100%;cursor:default;}
+#mapSvg{width:100%;height:100%;display:block;user-select:none;}
+.legend-bar-wrap{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(10,14,20,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+.legend-bar{width:140px;height:8px;border-radius:4px;background:linear-gradient(to right,#E24B4A 0%,#EF9F27 50%,#1D9E75 100%);}
+.legend-label{font-size:10px;color:rgba(255,255,255,0.6);}
+.map-label-card{position:absolute;top:12px;left:12px;background:rgba(10,14,20,0.82);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius);padding:6px 10px;font-size:10px;color:rgba(255,255,255,0.65);}
+.tooltip{position:absolute;background:#1e2333;border:1px solid rgba(255,255,255,0.14);border-radius:var(--radius);padding:9px 12px;font-size:12px;pointer-events:none;z-index:100;min-width:200px;max-width:240px;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+.tooltip-zip{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text);}
+.tooltip-row{display:flex;justify-content:space-between;gap:12px;color:var(--text2);margin-top:2px;}
+.tooltip-val{font-weight:500;color:var(--text);}
+.right-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--surface);}
+.panel-header{flex-shrink:0;padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.panel-title{font-size:13px;font-weight:600;color:var(--text);}
+.panel-count{font-size:11px;color:var(--text3);}
+.queue-list{flex:1;overflow-y:auto;min-height:0;}
+.queue-list::-webkit-scrollbar{width:4px;}
+.queue-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:2px;}
+.q-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.q-row:hover{background:var(--surface2);}
+.q-row.active{background:var(--blue-bg);}
+.q-rank{font-size:10px;color:var(--text3);width:16px;text-align:right;flex-shrink:0;}
+.q-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.q-info{flex:1;min-width:0;}
+.q-zip-name{font-size:12px;font-weight:600;color:var(--text);}
+.q-sub{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.q-score-col{flex-shrink:0;text-align:right;}
+.q-score-num{font-size:13px;font-weight:600;}
+.q-score-bar-bg{width:48px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:3px;margin-left:auto;}
+.q-score-bar{height:4px;border-radius:2px;}
+.detail-panel{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface2);}
+.detail-inner{padding:14px 16px;}
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.detail-zip{font-size:16px;font-weight:700;color:var(--text);}
+.detail-close{font-size:11px;color:var(--text3);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:transparent;}
+.detail-close:hover{background:var(--surface);color:var(--text);}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.stat-box{background:var(--surface);border-radius:var(--radius);padding:7px 8px;border:1px solid var(--border);}
+.stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;}
+.stat-val{font-size:15px;font-weight:700;line-height:1.2;margin-top:1px;color:var(--text);}
+.factors-title{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px;}
+.factor-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.factor-label{font-size:10px;color:var(--text2);width:118px;flex-shrink:0;}
+.factor-bar-bg{flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;}
+.factor-bar{height:5px;border-radius:3px;transition:width .3s;}
+.factor-val{font-size:10px;color:var(--text2);width:40px;text-align:right;flex-shrink:0;}
+.actions-row{display:flex;gap:6px;margin-top:12px;}
+.act-btn-primary{font-size:11px;padding:6px 12px;border-radius:var(--radius);border:none;background:var(--blue-bg);color:var(--blue-text);cursor:pointer;font-weight:500;}
+.act-btn-secondary{font-size:11px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;}
+.no-select{font-size:12px;color:var(--text3);text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:6px;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+  <div class="header-left">
+    <div>
+      <div class="header-title">Jacksonville Health Equity</div>
+      <div class="header-sub">Aid priority system · Duval County, FL</div>
+    </div>
+    <span class="header-badge">14.3-year LE gap</span>
+  </div>
+  <div class="metrics-bar">
+    <div class="metric-chip"><div class="metric-chip-val" style="color:var(--red);">68.7</div><div class="metric-chip-label">Lowest LE (ZIP 32209)</div></div>
+    <div class="metric-chip"><div class="metric-chip-val" style="color:var(--green);">83.0</div><div class="metric-chip-label">Highest LE (ZIP 32266)</div></div>
+    <div class="metric-chip"><div class="metric-chip-val" style="color:var(--orange);">98K</div><div class="metric-chip-label">People in crisis ZIPs</div></div>
+    <div class="metric-chip" style="padding:0;display:flex;">
+      <button onclick="openAuthModal()" id="loginBtn" style="height:100%;padding:8px 14px;border-radius:0;border:none;border-left:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-weight:500;font-size:11px;white-space:nowrap;display:flex;align-items:center;gap:5px;">Sign in</button>
+      <button onclick="handleRiskClick()" style="height:100%;padding:8px 16px;border-radius:0;border:none;border-left:0.5px solid var(--border);background:var(--blue-bg);color:var(--blue-text);cursor:pointer;font-weight:600;font-size:11px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;">Personal Risk Assessment <span style="font-size:13px;">↗</span></button>
+    </div>
+  </div>
+</div>
+<div class="toolbar">
+  <span class="toolbar-label">Map layer</span>
+  <button class="layer-btn active" data-layer="le">Life expectancy</button>
+  <button class="layer-btn" data-layer="risk">Aid priority score</button>
+  <button class="layer-btn" data-layer="uninsured">Uninsured rate</button>
+  <button class="layer-btn" data-layer="poverty">Poverty rate</button>
+  <button class="layer-btn" data-layer="food">Food insecurity</button>
+  <button class="layer-btn" data-layer="svi">Social vulnerability</button>
+  <div class="toolbar-sep"></div>
+  <button class="show-btn active" id="showLabels" onclick="toggleLabels()">ZIP labels</button>
+  
+  
+</div>
+<div class="main">
+  <div class="map-panel">
+    <div class="map-container" id="mapContainer" style="cursor:default;padding:0;position:relative;">
+      <iframe id="mapIframe"
+        src="map.html"
+        style="width:100%;height:100%;border:none;display:block;"
+        allowfullscreen>
+      </iframe>
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="panel-header">
+      <span class="panel-title">Aid priority queue</span>
+      <span class="panel-count" id="qCount">35 ZIPs sorted by need</span>
+    </div>
+    <div class="queue-list" id="queueList"></div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="no-select" id="noSelect"><span>↑</span> Select a ZIP to view details</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+// -- Pan / zoom state (disabled) -----------------------------------
+const SVG_W=600,SVG_H=370;
+let didDrag=false;
+
+function applyTransform(){}
+
+function resetView(){ applyTransform(); }
+
+// mouseup listener removed (no drag state)
+
+// Touch pan/zoom removed
+
+// -- Data ---------------------------------------------------------
+const Z = [
+{zip:"32202",le:73.0944,uninsured:27.4,poverty:23.24,food:21.2,svi:0.9311,depression:21.4,disability:48.9,poor_physical:22.3,smoking:31.8,no_leisure:45.4,checkup:73.0,bp:46.5,cholesterol:34.7,mental:25.3,pop:50727,x:346,y:214},
+{zip:"32203",le:76.2,uninsured:null,poverty:null,food:null,svi:null,depression:null,disability:null,poor_physical:null,smoking:null,no_leisure:null,checkup:null,bp:null,cholesterol:null,mental:null,pop:612,x:358,y:206},
+{zip:"32204",le:75.5328,uninsured:14.7,poverty:18.93,food:55.6,svi:0.6444,depression:20.8,disability:35.1,poor_physical:15.4,smoking:15.3,no_leisure:29.4,checkup:76.2,bp:37.6,cholesterol:34.7,mental:19.1,pop:20743,x:323,y:214},
+{zip:"32205",le:74.2022,uninsured:12.7,poverty:15.57,food:85.4,svi:0.5961,depression:21.3,disability:30.1,poor_physical:13.9,smoking:14.5,no_leisure:25.4,checkup:75.2,bp:33.2,cholesterol:33.3,mental:18.9,pop:27447,x:285,y:214},
+{zip:"32206",le:70.7455,uninsured:18.9,poverty:32.35,food:null,svi:0.9496,depression:19.9,disability:43.2,poor_physical:20.1,smoking:24.0,no_leisure:40.9,checkup:78.9,bp:48.1,cholesterol:35.9,mental:22.4,pop:24666,x:354,y:190},
+{zip:"32207",le:76.0689,uninsured:14.7,poverty:12.88,food:null,svi:0.7708,depression:19.8,disability:31.2,poor_physical:14.5,smoking:14.1,no_leisure:27.1,checkup:76.0,bp:35.2,cholesterol:35.6,mental:17.6,pop:85313,x:346,y:238},
+{zip:"32208",le:70.8223,uninsured:17.4,poverty:28.14,food:null,svi:0.8952,depression:18.7,disability:43.3,poor_physical:19.5,smoking:21.5,no_leisure:40.7,checkup:81.0,bp:50.6,cholesterol:37.2,mental:21.3,pop:21022,x:315,y:134},
+{zip:"32209",le:68.6554,uninsured:19.5,poverty:37.60,food:null,svi:0.9424,depression:18.6,disability:46.3,poor_physical:20.5,smoking:23.3,no_leisure:44.0,checkup:81.0,bp:51.9,cholesterol:36.2,mental:22.8,pop:36261,x:277,y:174},
+{zip:"32210",le:74.939,uninsured:15.8,poverty:16.48,food:null,svi:0.8428,depression:20.3,disability:34.9,poor_physical:15.9,smoking:17.2,no_leisure:31.4,checkup:76.7,bp:38.1,cholesterol:34.7,mental:20.0,pop:47859,x:269,y:238},
+{zip:"32211",le:75.2916,uninsured:18.0,poverty:22.58,food:null,svi:0.8859,depression:20.6,disability:36.2,poor_physical:16.7,smoking:18.2,no_leisure:32.9,checkup:75.7,bp:38.1,cholesterol:34.5,mental:20.6,pop:23111,x:385,y:214},
+{zip:"32212",le:77.2,uninsured:16.3,poverty:7.06,food:null,svi:0.0966,depression:22.6,disability:28.9,poor_physical:10.1,smoking:11.8,no_leisure:22.5,checkup:65.3,bp:17.0,cholesterol:18.5,mental:24.1,pop:9286,x:292,y:258},
+{zip:"32214",le:null,uninsured:null,poverty:null,food:null,svi:null,depression:null,disability:null,poor_physical:null,smoking:null,no_leisure:null,checkup:null,bp:null,cholesterol:null,mental:null,pop:358,x:310,y:200},
+{zip:"32216",le:77.231,uninsured:14.9,poverty:17.11,food:null,svi:0.7934,depression:19.8,disability:30.8,poor_physical:13.9,smoking:13.7,no_leisure:27.1,checkup:75.0,bp:33.0,cholesterol:33.4,mental:18.2,pop:64497,x:385,y:238},
+{zip:"32217",le:77.8158,uninsured:13.0,poverty:11.03,food:null,svi:0.6506,depression:19.2,disability:29.7,poor_physical:13.4,smoking:11.6,no_leisure:24.7,checkup:77.2,bp:34.6,cholesterol:35.8,mental:16.5,pop:21970,x:339,y:262},
+{zip:"32218",le:74.6282,uninsured:13.8,poverty:10.90,food:null,svi:0.702,depression:19.4,disability:33.0,poor_physical:14.9,smoking:15.8,no_leisure:29.4,checkup:77.4,bp:38.4,cholesterol:33.5,mental:19.6,pop:72776,x:339,y:94},
+{zip:"32219",le:74.2827,uninsured:13.4,poverty:9.42,food:null,svi:0.6598,depression:18.8,disability:33.9,poor_physical:15.3,smoking:16.3,no_leisure:30.4,checkup:78.3,bp:40.9,cholesterol:34.7,mental:19.2,pop:16507,x:269,y:118},
+{zip:"32220",le:73.1829,uninsured:13.8,poverty:10.86,food:null,svi:0.4018,depression:22.1,disability:34.9,poor_physical:16.6,smoking:17.9,no_leisure:29.4,checkup:75.7,bp:37.7,cholesterol:36.9,mental:19.8,pop:12452,x:184,y:150},
+{zip:"32221",le:77.5441,uninsured:12.7,poverty:8.15,food:null,svi:0.5437,depression:19.6,disability:31.0,poor_physical:14.4,smoking:14.5,no_leisure:27.1,checkup:76.9,bp:36.2,cholesterol:34.9,mental:18.4,pop:23014,x:223,y:214},
+{zip:"32222",le:78.2837,uninsured:13.9,poverty:5.90,food:null,svi:0.3546,depression:20.0,disability:31.7,poor_physical:14.6,smoking:15.3,no_leisure:28.3,checkup:76.2,bp:35.8,cholesterol:33.7,mental:19.3,pop:7066,x:230,y:254},
+{zip:"32223",le:80.6864,uninsured:10.1,poverty:6.22,food:null,svi:0.1254,depression:20.0,disability:28.2,poor_physical:13.3,smoking:11.6,no_leisure:22.4,checkup:77.9,bp:35.0,cholesterol:37.8,mental:16.0,pop:21305,x:323,y:286},
+{zip:"32224",le:80.8585,uninsured:10.5,poverty:9.52,food:null,svi:0.4882,depression:20.9,disability:26.7,poor_physical:11.6,smoking:10.1,no_leisure:20.6,checkup:74.8,bp:28.4,cholesterol:32.0,mental:17.8,pop:57608,x:439,y:254},
+{zip:"32225",le:79.0993,uninsured:10.7,poverty:7.97,food:null,svi:0.2569,depression:19.6,disability:26.8,poor_physical:12.3,smoking:11.5,no_leisure:22.4,checkup:76.1,bp:32.0,cholesterol:34.2,mental:16.8,pop:47699,x:439,y:198},
+{zip:"32226",le:76.391,uninsured:10.4,poverty:6.32,food:null,svi:0.1213,depression:19.9,disability:27.2,poor_physical:12.9,smoking:12.5,no_leisure:22.6,checkup:76.4,bp:33.0,cholesterol:34.4,mental:17.1,pop:18788,x:431,y:110},
+{zip:"32227",le:72.7,uninsured:16.7,poverty:5.64,food:null,svi:0.2672,depression:20.2,disability:26.7,poor_physical:9.3,smoking:10.9,no_leisure:20.2,checkup:64.0,bp:16.8,cholesterol:18.3,mental:22.2,pop:7374,x:539,y:270},
+{zip:"32228",le:72.7,uninsured:15.5,poverty:null,food:null,svi:null,depression:20.5,disability:27.3,poor_physical:8.7,smoking:9.6,no_leisure:18.5,checkup:62.8,bp:14.4,cholesterol:14.9,mental:23.4,pop:1141,x:554,y:246},
+{zip:"32233",le:77.0403,uninsured:11.9,poverty:9.45,food:null,svi:0.3957,depression:20.4,disability:29.7,poor_physical:13.4,smoking:12.8,no_leisure:23.8,checkup:76.0,bp:33.6,cholesterol:35.4,mental:17.4,pop:18721,x:531,y:198},
+{zip:"32234",le:74.7477,uninsured:12.6,poverty:3.93,food:null,svi:0.2395,depression:21.4,disability:33.9,poor_physical:15.8,smoking:16.7,no_leisure:28.1,checkup:76.6,bp:37.8,cholesterol:37.9,mental:19.3,pop:5282,x:184,y:142},
+{zip:"32244",le:75.597,uninsured:15.2,poverty:16.08,food:null,svi:0.7718,depression:19.9,disability:32.8,poor_physical:15.0,smoking:15.7,no_leisure:29.7,checkup:76.2,bp:36.2,cholesterol:33.9,mental:19.5,pop:37540,x:254,y:278},
+{zip:"32246",le:77.1512,uninsured:13.1,poverty:11.58,food:null,svi:0.4286,depression:19.9,disability:28.1,poor_physical:12.9,smoking:12.8,no_leisure:24.8,checkup:74.3,bp:30.6,cholesterol:32.6,mental:17.9,pop:64821,x:423,y:238},
+{zip:"32250",le:78.9891,uninsured:9.3,poverty:5.74,food:null,svi:0.2138,depression:20.2,disability:25.0,poor_physical:11.7,smoking:10.0,no_leisure:19.3,checkup:76.2,bp:31.1,cholesterol:35.1,mental:15.5,pop:33115,x:531,y:238},
+{zip:"32254",le:70.6256,uninsured:20.1,poverty:33.74,food:null,svi:0.9322,depression:20.7,disability:43.0,poor_physical:19.9,smoking:24.4,no_leisure:40.5,checkup:77.5,bp:45.5,cholesterol:35.7,mental:23.0,pop:32701,x:246,y:182},
+{zip:"32256",le:79.4843,uninsured:10.5,poverty:9.32,food:null,svi:0.3412,depression:19.0,disability:25.3,poor_physical:11.0,smoking:9.5,no_leisure:20.8,checkup:75.4,bp:29.2,cholesterol:32.0,mental:16.3,pop:111975,x:385,y:278},
+{zip:"32257",le:78.4784,uninsured:12.1,poverty:11.19,food:null,svi:0.555,depression:20.2,disability:29.5,poor_physical:13.6,smoking:12.6,no_leisure:24.4,checkup:76.4,bp:33.8,cholesterol:35.5,mental:17.2,pop:36303,x:369,y:294},
+{zip:"32258",le:80.1813,uninsured:10.0,poverty:7.86,food:null,svi:0.2621,depression:19.8,disability:25.1,poor_physical:11.7,smoking:10.8,no_leisure:21.0,checkup:75.4,bp:29.8,cholesterol:33.0,mental:16.6,pop:36860,x:346,y:318},
+{zip:"32266",le:82.95,uninsured:7.1,poverty:3.07,food:null,svi:0.0206,depression:20.2,disability:22.9,poor_physical:10.9,smoking:9.0,no_leisure:16.9,checkup:76.6,bp:29.8,cholesterol:34.9,mental:14.9,pop:8449,x:539,y:214},
+{zip:"32277",le:76.836,uninsured:15.1,poverty:17.76,food:null,svi:0.8818,depression:20.5,disability:33.7,poor_physical:14.9,smoking:15.2,no_leisure:29.4,checkup:76.0,bp:35.5,cholesterol:33.0,mental:20.3,pop:20081,x:423,y:174}
+];
+const maxPop=Math.max(...Z.map(d=>d.pop));
+function riskScore(d){
+  if(!d.le)return 0;
+  const fs=[
+    {v:d.le!==null?(1-(d.le-68.66)/14.29):null,w:0.10},
+    {v:d.uninsured!==null?d.uninsured/28:null,w:0.08},
+    {v:d.poverty!==null?d.poverty/38:null,w:0.09},
+    {v:d.food!==null?d.food/87:null,w:0.05},
+    {v:d.svi!==null?d.svi:null,w:0.06},
+    {v:d.depression!==null?d.depression/23:null,w:0.06},
+    {v:d.disability!==null?d.disability/49:null,w:0.08},
+    {v:d.poor_physical!==null?d.poor_physical/23:null,w:0.07},
+    {v:d.smoking!==null?d.smoking/32:null,w:0.06},
+    {v:d.no_leisure!==null?d.no_leisure/45:null,w:0.07},
+    {v:d.checkup!==null?(1-d.checkup/82):null,w:0.08},
+    {v:d.bp!==null?d.bp/52:null,w:0.09},
+    {v:d.cholesterol!==null?d.cholesterol/38:null,w:0.05},
+    {v:d.mental!==null?d.mental/26:null,w:0.06},
+  ];
+  const avail=fs.filter(f=>f.v!==null);
+  if(!avail.length)return 0;
+  const tw=avail.reduce((s,f)=>s+f.w,0);
+  return Math.round(avail.reduce((s,f)=>s+f.v*f.w,0)/tw*100);
+}
+Z.forEach(d=>{d.risk=riskScore(d);});
+function na(v,suffix){return v===null||v===undefined?'N/A':v+suffix;}
+const sorted=[...Z].sort((a,b)=>b.risk-a.risk);
+function lerp(a,b,t){return a+(b-a)*t;}
+function heatColor(t){t=Math.max(0,Math.min(1,t));let r,g,b;if(t<0.5){const u=t*2;r=lerp(226,239,u);g=lerp(75,159,u);b=lerp(74,39,u);}else{const u=(t-0.5)*2;r=lerp(239,29,u);g=lerp(159,158,u);b=lerp(39,117,u);}return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;}
+const layers={le:{get:d=>d.le!=null?(d.le-68.66)/14.29:0.5,low:'Lowest (68.7 yrs)',high:'Highest (83.0 yrs)',label:'Life expectancy',fmt:d=>d.le!=null?d.le.toFixed(1)+' yrs':'N/A'},risk:{get:d=>1-d.risk/100,low:'Highest need',high:'Lowest need',label:'Aid priority score',fmt:d=>d.risk+'/100'},uninsured:{get:d=>d.uninsured!=null?1-d.uninsured/30:0.5,low:'High uninsured (27%)',high:'Low uninsured (7%)',label:'Uninsured rate',fmt:d=>d.uninsured!=null?d.uninsured+'%':'N/A'},poverty:{get:d=>d.poverty!=null?1-d.poverty/40:0.5,low:'High poverty (38%)',high:'Low poverty (3%)',label:'Poverty rate',fmt:d=>d.poverty!=null?d.poverty+'%':'N/A'},food:{get:d=>d.food!=null?1-d.food/85:0.5,low:'High insecurity (82%)',high:'Low insecurity (2%)',label:'Food insecurity',fmt:d=>d.food!=null?d.food+'%':'N/A'},svi:{get:d=>d.svi!=null?1-d.svi:0.5,low:'Highest vulnerability',high:'Lowest vulnerability',label:'Social vulnerability',fmt:d=>d.svi!=null?d.svi.toFixed(2)+' SVI':'N/A'}};
+let currentLayer='le',selectedZip=null,showLabelFlag=true;
+const tooltip=document.getElementById('tooltip'),mapContainer=document.getElementById('mapContainer');
+function getR(pop){return 4+Math.sqrt(pop/maxPop)*10;}
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs){const e=document.createElementNS(NS,tag);Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,v));return e;}
+function drawMap(){
+  const layer=layers[currentLayer];
+  const legLow=document.getElementById('legLow');
+  const legHigh=document.getElementById('legHigh');
+  if(legLow) legLow.textContent=layer.low;
+  if(legHigh) legHigh.textContent=layer.high;
+}
+function drawCircle(d,isSelected,layer,grp){
+  const t=layer.get(d),col=heatColor(t),r=getR(d.pop),g=el('g',{cursor:'pointer'});
+  if(isSelected){g.appendChild(el('circle',{cx:d.x,cy:d.y,r:r+6,fill:'none',stroke:'#1c1c1a','stroke-width':'2','stroke-opacity':'0.3'}));}
+  g.appendChild(el('circle',{cx:d.x,cy:d.y,r:r,fill:col,'fill-opacity':isSelected?'1':'0.82',stroke:isSelected?'#1c1c1a':'rgba(255,255,255,0.5)','stroke-width':isSelected?'2':'0.8'}));
+  if(showLabelFlag){const fs=Math.max(3,Math.min(r*0.38,9)/vScale);const txt=el('text',{x:d.x,y:d.y+1,'text-anchor':'middle','dominant-baseline':'central','font-size':fs,'font-weight':isSelected?'700':'500',fill:'white','pointer-events':'none','font-family':'Helvetica Neue,Arial,sans-serif','class':'zip-label'});txt.textContent=d.zip;g.appendChild(txt);}
+  g.addEventListener('mouseenter',e=>showTooltip(e,d,layer));
+  g.addEventListener('mousemove',e=>positionTooltip(e));
+  g.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
+  // Only fire click if user didn't drag
+  g.addEventListener('click',e=>{e.stopPropagation();if(!didDrag)selectZip(d.zip);});
+  grp.appendChild(g);
+}
+function buildTooltipHTML(d, layer) {
+  const col = heatColor(layer.get(d));
+  const rc = heatColor(1-d.risk/100);
+  // Rank all available metrics by their normalised severity
+  const allMetrics = [
+    {label:'Uninsured rate', val:d.uninsured, norm:d.uninsured!=null?d.uninsured/28:null, suffix:'%'},
+    {label:'Poverty rate', val:d.poverty, norm:d.poverty!=null?d.poverty/38:null, suffix:'%'},
+    {label:'High blood pressure', val:d.bp, norm:d.bp!=null?d.bp/52:null, suffix:'%'},
+    {label:'Any disability', val:d.disability, norm:d.disability!=null?d.disability/49:null, suffix:'%'},
+    {label:'No leisure activity', val:d.no_leisure, norm:d.no_leisure!=null?d.no_leisure/45:null, suffix:'%'},
+    {label:'Regular smoking', val:d.smoking, norm:d.smoking!=null?d.smoking/32:null, suffix:'%'},
+    {label:'Food insecurity', val:d.food, norm:d.food!=null?d.food/87:null, suffix:'%'},
+    {label:'Depression', val:d.depression, norm:d.depression!=null?d.depression/23:null, suffix:'%'},
+    {label:'Poor mental health', val:d.mental, norm:d.mental!=null?d.mental/26:null, suffix:'%'},
+    {label:'Poor physical health', val:d.poor_physical, norm:d.poor_physical!=null?d.poor_physical/23:null, suffix:'%'},
+    {label:'SVI vulnerability', val:d.svi, norm:d.svi, suffix:''},
+    {label:'High cholesterol', val:d.cholesterol, norm:d.cholesterol!=null?d.cholesterol/38:null, suffix:'%'},
+  ].filter(m=>m.norm!=null).sort((a,b)=>b.norm-a.norm);
+  const top4 = allMetrics.slice(0,4);
+  const metricRows = top4.map(m=>{
+    const barW = Math.round(m.norm*100);
+    const barCol = m.norm>0.7?'#E24B4A':m.norm>0.45?'#EF9F27':'#1D9E75';
+    const dispVal = m.suffix==='%'?(typeof m.val==='number'?m.val+'%':m.val):(typeof m.val==='number'?m.val.toFixed(2):m.val);
+    return `<div style="margin-top:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:2px;">
+        <span>${m.label}</span><span style="font-weight:600;color:#1c1c1a;">${dispVal}${m.suffix&&!dispVal.endsWith('%')?'':''}</span>
+      </div>
+      <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;"><div style="height:3px;width:${barW}%;background:${barCol};border-radius:2px;"></div></div>
+    </div>`;
+  }).join('');
+  return `<div class="tooltip-zip" style="color:${col};">${d.zip}</div>
+    <div class="tooltip-row"><span>${layer.label}</span><span class="tooltip-val">${layer.fmt(d)}</span></div>
+    <div class="tooltip-row"><span>Life expectancy</span><span class="tooltip-val">${na(d.le,' yrs')}</span></div>
+    <div class="tooltip-row"><span>Population</span><span class="tooltip-val">${d.pop!==null?d.pop.toLocaleString():'N/A'}</span></div>
+    <div class="tooltip-row" style="margin-bottom:4px;"><span>Aid score</span><span class="tooltip-val" style="color:${rc};">${d.risk||'N/A'}/100</span></div>
+    <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-top:6px;margin-bottom:2px;">Top risk metrics</div>
+    ${metricRows}`;
+}
+function showTooltip(e,d,layer){tooltip.innerHTML=buildTooltipHTML(d,layer);tooltip.style.display='block';positionTooltip(e);}
+function positionTooltip(e){const rect=mapContainer.getBoundingClientRect();let left=e.clientX-rect.left+14,top=e.clientY-rect.top+14;if(left+180>rect.width)left=e.clientX-rect.left-184;if(top+120>rect.height)top=e.clientY-rect.top-124;tooltip.style.left=left+'px';tooltip.style.top=top+'px';}
+function topMetrics(d){
+  const cands=[
+    {label:'Uninsured',val:d.uninsured,pct:d.uninsured,suffix:'%'},
+    {label:'Poverty',val:d.poverty,pct:d.poverty,suffix:'%'},
+    {label:'High BP',val:d.bp,pct:d.bp,suffix:'%'},
+    {label:'Disability',val:d.disability,pct:d.disability,suffix:'%'},
+    {label:'No leisure',val:d.no_leisure,pct:d.no_leisure,suffix:'%'},
+    {label:'Smoking',val:d.smoking,pct:d.smoking,suffix:'%'},
+    {label:'Depression',val:d.depression,pct:d.depression,suffix:'%'},
+    {label:'Poor phys.',val:d.poor_physical,pct:d.poor_physical,suffix:'%'},
+    {label:'Food insec.',val:d.food,pct:d.food,suffix:'%'},
+  ].filter(c=>c.val!==null).sort((a,b)=>b.pct-a.pct).slice(0,2);
+  return cands;
+}
+function drawQueue(){
+  const list=document.getElementById('queueList');
+  list.innerHTML=sorted.map((d,i)=>{
+    const lc=heatColor(layers.le.get(d));
+    const rc=heatColor(1-d.risk/100);
+    const isActive=d.zip===selectedZip;
+    const pop=d.pop!==null?(d.pop>=1000?(d.pop/1000).toFixed(0)+'K':d.pop):'—';
+    const top=topMetrics(d);
+    const tagHtml=top.map(m=>`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:rgba(255,255,255,0.08);color:var(--text2);white-space:nowrap;">${m.label} ${m.val}${m.suffix}</span>`).join('');
+    // SVG circle sized by population (14–28px diameter)
+    const maxP=maxPop;
+    const r=Math.round(7+Math.sqrt(d.pop/maxP)*7);
+    const dia=r*2;
+    const circSvg=`<svg width="${dia}" height="${dia}" viewBox="0 0 ${dia} ${dia}" style="flex-shrink:0;display:block;">
+      <circle cx="${r}" cy="${r}" r="${r-1}" fill="${lc}" fill-opacity="${isActive?1:0.82}" stroke="${isActive?'#1c1c1a':'rgba(255,255,255,0.5)'}" stroke-width="${isActive?1.5:0.8}"/>
+      <text x="${r}" y="${r+1}" text-anchor="middle" dominant-baseline="central" font-size="${Math.max(5,Math.min(r*0.55,8))}" font-weight="${isActive?700:500}" fill="white" font-family="Helvetica Neue,Arial,sans-serif">${d.zip.slice(-3)}</text>
+    </svg>`;
+    return `<div class="q-row${isActive?' active':''}" onclick="selectZip('${d.zip}')" style="align-items:center;gap:8px;padding:7px 12px;">
+      <span class="q-rank">${i+1}</span>
+      ${circSvg}
+      <div class="q-info" style="min-width:0;flex:1;">
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span class="q-zip-name">${d.zip}</span>
+          <span style="font-size:9px;color:var(--text3);">${pop} pop</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px;">${tagHtml}</div>
+        <div class="q-sub" style="margin-top:2px;">${na(d.le,' yrs LE')} · LE rank #${i+1}</div>
+      </div>
+      <div class="q-score-col">
+        <div class="q-score-num" style="color:${rc};">${d.risk}</div>
+        <div class="q-score-bar-bg"><div class="q-score-bar" style="width:${d.risk}%;background:${rc};"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function drawDetail(zip){
+  const d=Z.find(z=>z.zip===zip),panel=document.getElementById('detailPanel');
+  if(!d){panel.innerHTML='<div class="no-select"><span>^</span> Select a ZIP to view details</div>';return;}
+  const lc=heatColor(layers.le.get(d)),rank=sorted.findIndex(z=>z.zip===zip)+1;
+  const factors=[{label:'LE gap from max',v:d.le!==null,pct:d.le!==null?Math.round((82.95-d.le)/14.29*100):0,val:d.le!==null?(82.95-d.le).toFixed(1)+' yrs gap':'N/A',col:'#E24B4A'},{label:'Poverty rate',v:d.poverty!==null,pct:d.poverty!==null?d.poverty:0,val:na(d.poverty,'%'),col:'#EF9F27'},{label:'Uninsured rate',v:d.uninsured!==null,pct:d.uninsured!==null?d.uninsured:0,val:na(d.uninsured,'%'),col:'#EF9F27'},{label:'Food insecurity',v:d.food!==null,pct:d.food!==null?d.food:0,val:na(d.food,'%'),col:'#639922'},{label:'Social vulnerability',v:d.svi!==null,pct:d.svi!==null?Math.round(d.svi*100):0,val:d.svi!==null?d.svi.toFixed(2)+' SVI':'N/A',col:'#639922'},{label:'Any disability',v:d.disability!==null,pct:d.disability!==null?d.disability:0,val:na(d.disability,'%'),col:'#E24B4A'},{label:'High blood pressure',v:d.bp!==null,pct:d.bp!==null?d.bp:0,val:na(d.bp,'%'),col:'#E24B4A'},{label:'No leisure activity',v:d.no_leisure!==null,pct:d.no_leisure!==null?d.no_leisure:0,val:na(d.no_leisure,'%'),col:'#EF9F27'},{label:'Regular smoking',v:d.smoking!==null,pct:d.smoking!==null?d.smoking:0,val:na(d.smoking,'%'),col:'#EF9F27'},{label:'Poor physical health',v:d.poor_physical!==null,pct:d.poor_physical!==null?d.poor_physical:0,val:na(d.poor_physical,'%'),col:'#EF9F27'},{label:'Poor mental health',v:d.mental!==null,pct:d.mental!==null?d.mental:0,val:na(d.mental,'%'),col:'#885AB1'},{label:'Depression diagnosed',v:d.depression!==null,pct:d.depression!==null?d.depression:0,val:na(d.depression,'%'),col:'#885AB1'},{label:'High cholesterol',v:d.cholesterol!==null,pct:d.cholesterol!==null?d.cholesterol:0,val:na(d.cholesterol,'%'),col:'#639922'},{label:'Recent checkup',v:d.checkup!==null,pct:d.checkup!==null?d.checkup:0,val:na(d.checkup,'%'),col:'#1D9E75'}];
+  const tl=d.risk>=75?'Critical':d.risk>=55?'High':d.risk>=35?'Moderate':'Low',tc=d.risk>=75?'var(--red)':d.risk>=55?'var(--orange)':'var(--green)',tb=d.risk>=75?'var(--red-bg)':d.risk>=55?'var(--orange-bg)':'var(--green-bg)';
+  panel.innerHTML=`<div class="detail-inner"><div class="detail-header"><div><div class="detail-zip">${d.zip} <span style="font-size:11px;font-weight:400;color:var(--text3);">rank #${rank} of ${Z.length}</span></div><span style="font-size:10px;padding:2px 8px;border-radius:12px;background:${tb};color:${tc};font-weight:500;">${tl} . Aid score ${d.risk||'N/A'}</span></div><button class="detail-close" onclick="clearSelect()">x close</button></div><div class="stat-grid"><div class="stat-box"><div class="stat-label">Life exp.</div><div class="stat-val" style="color:${lc};">${na(d.le,'')}</div></div><div class="stat-box"><div class="stat-label">Uninsured</div><div class="stat-val" style="color:var(--red);">${na(d.uninsured,'%')}</div></div><div class="stat-box"><div class="stat-label">Poverty</div><div class="stat-val" style="color:var(--red);">${na(d.poverty,'%')}</div></div><div class="stat-box"><div class="stat-label">Population</div><div class="stat-val">${d.pop!==null?(d.pop/1000).toFixed(0)+'K':'N/A'}</div></div></div><div class="factors-title">Contributing risk factors</div>${factors.map(f=>`<div class="factor-row"><span class="factor-label">${f.label}</span><div class="factor-bar-bg">${f.v?`<div class="factor-bar" style="width:${f.pct}%;background:${f.col};"></div>`:`<span style="font-size:10px;color:var(--text3);line-height:4px;">N/A</span>`}</div><span class="factor-val">${f.val}</span></div>`).join('')}<div class="actions-row"></div></div>`;
+}
+function selectZip(zip){
+  if(selectedZip===zip){clearSelect();return;}
+  selectedZip=zip;
+  drawMap();drawQueue();drawDetail(zip);
+  const idx=sorted.findIndex(d=>d.zip===zip);
+  const rows=document.querySelectorAll('.q-row');
+  if(rows[idx])rows[idx].scrollIntoView({block:'nearest',behavior:'smooth'});
+  iframeSelectZip(zip);
+}
+function clearSelect(){
+  selectedZip=null;
+  drawMap();drawQueue();drawDetail(null);
+  iframeSelectZip(null);
+}
+function toggleLabels(){showLabelFlag=!showLabelFlag;document.getElementById('showLabels').classList.toggle('active',showLabelFlag);drawMap();}
+document.querySelectorAll('.layer-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.layer-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentLayer=btn.dataset.layer;drawMap();});});
+drawMap();drawQueue();
+</script>
+<!-- Personal Risk Modal -->
+<style>
+.prm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:none;align-items:center;justify-content:center;}
+.prm-overlay.open{display:flex;}
+.prm-box{background:var(--surface);border-radius:var(--radius-lg);width:min(560px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border2);}
+.prm-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.prm-title{font-size:14px;font-weight:600;color:var(--text);}
+.prm-close{font-size:12px;color:var(--text3);cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;}
+.prm-body{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.prm-section{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:-6px;}
+.prm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.prm-field{display:flex;flex-direction:column;gap:4px;}
+.prm-field label{font-size:11px;color:var(--text2);}
+.prm-field select,.prm-field input[type=number]{font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);width:100%;}
+.prm-field select:focus,.prm-field input:focus{outline:none;border-color:var(--blue);}
+.prm-submit{margin:4px 20px 20px;padding:10px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:500;cursor:pointer;}
+.prm-submit:hover{opacity:0.9;}
+.prm-result{margin:0 20px 20px;border-radius:var(--radius);padding:16px;border:1px solid var(--border);display:none;flex-direction:column;gap:10px;}
+.prm-result.show{display:flex;}
+.prm-score-row{display:flex;align-items:center;gap:14px;}
+.prm-score-num{font-size:36px;font-weight:700;line-height:1;color:var(--text);}
+.prm-score-meta{display:flex;flex-direction:column;gap:2px;}
+.prm-score-label{font-size:11px;color:var(--text2);}
+.prm-score-tier{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:500;display:inline-block;margin-top:2px;}
+.prm-bars{display:flex;flex-direction:column;gap:6px;}
+.prm-bar-row{display:grid;grid-template-columns:140px 1fr 36px;align-items:center;gap:8px;}
+.prm-bar-label{font-size:11px;color:var(--text2);text-align:right;}
+.prm-bar-bg{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.prm-bar-fill{height:5px;border-radius:3px;transition:width .4s;}
+.prm-bar-val{font-size:11px;color:var(--text);font-weight:500;}
+.prm-compare{font-size:11px;color:var(--text2);padding-top:6px;border-top:1px solid var(--border);}
+/* ── Auth modal ──────────────────────────────────────────────── */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:600;display:none;align-items:center;justify-content:center;}
+.auth-overlay.open{display:flex;}
+.auth-box{background:var(--surface);border-radius:var(--radius-lg);width:min(420px,96vw);overflow:hidden;border:1px solid var(--border2);box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);}
+.auth-tab{flex:1;padding:13px;font-size:12px;font-weight:500;text-align:center;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .15s;}
+.auth-tab.active{color:var(--blue-text);background:var(--blue-bg);font-weight:600;}
+.auth-body{padding:24px 24px 20px;}
+.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.auth-field label{font-size:11px;font-weight:500;color:var(--text2);}
+.auth-field input{font-size:12px;padding:8px 11px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none;transition:border-color .15s;}
+.auth-field input:focus{border-color:var(--blue);}
+.auth-error{font-size:11px;color:var(--red-text);background:var(--red-bg);padding:7px 10px;border-radius:6px;margin-bottom:12px;display:none;}
+.auth-error.show{display:block;}
+.auth-submit{width:100%;padding:10px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;transition:opacity .15s;}
+.auth-submit:hover{opacity:0.88;}
+.auth-divider{text-align:center;font-size:10px;color:var(--text3);margin:14px 0;position:relative;}
+.auth-divider::before{content:'';position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--border);}
+.auth-divider span{background:var(--surface);padding:0 8px;position:relative;}
+.auth-footer{font-size:11px;color:var(--text2);text-align:center;padding:0 24px 20px;}
+.auth-footer a{color:var(--blue-text);cursor:pointer;text-decoration:none;}
+.auth-footer a:hover{text-decoration:underline;}
+/* user badge in header */
+.user-badge{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.user-badge:hover{background:var(--bg);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.user-name{font-size:11px;font-weight:500;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.user-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,0.4);z-index:200;min-width:160px;overflow:hidden;}
+.user-menu-item{padding:9px 14px;font-size:12px;cursor:pointer;color:var(--text);transition:background .1s;}
+.user-menu-item:hover{background:var(--surface2);}
+.user-menu-item.danger{color:var(--red-text);}
+.user-menu-sep{height:1px;background:var(--border);margin:3px 0;}
+.auth-gate{padding:28px 24px;text-align:center;}
+.auth-gate-icon{font-size:32px;margin-bottom:12px;}
+.auth-gate-title{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text);}
+.auth-gate-sub{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
+.auth-gate-btns{display:flex;gap:8px;justify-content:center;}
+.auth-gate-btn-primary{padding:8px 20px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:600;cursor:pointer;}
+.auth-gate-btn-secondary{padding:8px 20px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;}
+
+</style>
+
+<!-- Auth Modal -->
+<div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-box">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign in</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create account</button>
+    </div>
+    <!-- Login panel -->
+    <div id="panelLogin">
+      <div class="auth-body">
+        <div class="auth-error" id="loginError"></div>
+        <div class="auth-field"><label>Email address</label><input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="auth-field"><label>Password</label><input type="password" id="loginPw" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="auth-submit" onclick="doLogin()">Sign in</button>
+      </div>
+      <div class="auth-footer">Don't have an account? <a onclick="switchAuthTab('register')">Create one free</a></div>
+    </div>
+    <!-- Register panel -->
+    <div id="panelRegister" style="display:none;">
+      <div class="auth-body">
+        <div class="auth-error" id="regError"></div>
+        <div class="auth-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <div class="auth-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <div class="auth-field"><label>Password</label><input type="password" id="regPw" placeholder="Choose a password (8+ chars)" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <div class="auth-field"><label>Confirm password</label><input type="password" id="regPw2" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <button class="auth-submit" onclick="doRegister()">Create account</button>
+      </div>
+      <div class="auth-footer">Already have an account? <a onclick="switchAuthTab('login')">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- User menu dropdown (hidden until logged in) -->
+<div id="userMenuDropdown" class="user-menu" style="display:none;position:fixed;top:50px;right:16px;">
+  <div class="user-menu-item" onclick="handleRiskClick()">My Risk Assessment</div>
+  <div class="user-menu-sep"></div>
+  <div class="user-menu-item danger" onclick="doLogout()">Sign out</div>
+</div>
+
+
+<div class="prm-overlay" id="prmOverlay" onclick="if(event.target===this)closeRiskModal()">
+  <div class="prm-box">
+    <div class="prm-head">
+      <span class="prm-title">Personal health risk assessment</span>
+      <button class="prm-close" onclick="closeRiskModal()">✕ close</button>
+    </div>
+    <div class="prm-body">
+      <div class="prm-section">Demographics</div>
+      <div class="prm-row">
+        <div class="prm-field"><label>Age</label><input type="number" id="pr-age" min="18" max="100" placeholder="e.g. 45"></div>
+        <div class="prm-field"><label>Health insurance</label><select id="pr-insured"><option value="">Select…</option><option value="yes">Yes, insured</option><option value="no">No insurance</option></select></div>
+      </div>
+      <div class="prm-row">
+        <div class="prm-field"><label>Household income</label><select id="pr-income"><option value="">Select…</option><option value="under25">Under $25,000</option><option value="25to50">$25,000-$50,000</option><option value="50to75">$50,000-$75,000</option><option value="75to100">$75,000-$100,000</option><option value="over100">Over $100,000</option></select></div>
+        <div class="prm-field"><label>Food access</label><select id="pr-food"><option value="">Select…</option><option value="easy">Easy -- store within 0.5 mi</option><option value="moderate">Moderate -- within 1-2 mi</option><option value="hard">Difficult -- over 2 mi away</option></select></div>
+      </div>
+
+      <div class="prm-section">Physical health</div>
+      <div class="prm-row">
+        <div class="prm-field"><label>Any disability</label><select id="pr-disability"><option value="">Select…</option><option value="no">No disability</option><option value="yes">Yes, one or more</option></select></div>
+        <div class="prm-field"><label>High blood pressure diagnosed</label><select id="pr-bp"><option value="">Select…</option><option value="no">No</option><option value="yes">Yes</option></select></div>
+      </div>
+      <div class="prm-row">
+        <div class="prm-field"><label>High cholesterol diagnosed</label><select id="pr-chol"><option value="">Select…</option><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="prm-field"><label>Regular smoker</label><select id="pr-smoke"><option value="">Select…</option><option value="no">No</option><option value="yes">Yes</option></select></div>
+      </div>
+      <div class="prm-row">
+        <div class="prm-field"><label>Poor physical health days / month</label><select id="pr-physdays"><option value="">Select…</option><option value="0">0 days</option><option value="1">1-3 days</option><option value="7">4-7 days</option><option value="14">8-14 days</option><option value="21">15+ days</option></select></div>
+        <div class="prm-field"><label>Leisure physical activity</label><select id="pr-leisure"><option value="">Select…</option><option value="regular">Regular (3+ days/wk)</option><option value="some">Some (1-2 days/wk)</option><option value="none">None</option></select></div>
+      </div>
+
+      <div class="prm-section">Mental health</div>
+      <div class="prm-row">
+        <div class="prm-field"><label>Diagnosed depression or anxiety</label><select id="pr-dep"><option value="">Select…</option><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="prm-field"><label>Poor mental health days / month</label><select id="pr-mentdays"><option value="">Select…</option><option value="0">0 days</option><option value="1">1-3 days</option><option value="7">4-7 days</option><option value="14">8-14 days</option><option value="21">15+ days</option></select></div>
+      </div>
+
+      <div class="prm-section">Preventive care</div>
+      <div class="prm-row">
+        <div class="prm-field"><label>Recent checkup (past year)</label><select id="pr-checkup"><option value="">Select…</option><option value="yes">Yes, had a checkup</option><option value="no">No checkup in past year</option></select></div>
+      </div>
+    </div>
+    <div id="prmHistory" style="display:none;padding:0 20px 12px;font-size:11px;"></div>
+    <button class="prm-submit" onclick="calcPersonalRisk()">Calculate my risk score</button>
+    <div class="prm-result" id="prmResult">
+      <div class="prm-score-row">
+        <div class="prm-score-num" id="prmScoreNum">--</div>
+        <div class="prm-score-meta">
+          <span class="prm-score-label">Personal aid priority score (out of 100)</span>
+          <span class="prm-score-tier" id="prmTier"></span>
+        </div>
+      </div>
+      <div class="prm-bars" id="prmBars"></div>
+      <div class="prm-compare" id="prmCompare"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Auth helpers ────────────────────────────────────────────────
+var currentUser = null;
+
+function getAccounts(){
+  try{ return JSON.parse(localStorage.getItem('jhe_accounts')||'{}'); }
+  catch(e){ return {}; }
+}
+function saveAccounts(obj){
+  localStorage.setItem('jhe_accounts', JSON.stringify(obj));
+}
+function getSession(){
+  try{ return JSON.parse(sessionStorage.getItem('jhe_session')||'null'); }
+  catch(e){ return null; }
+}
+function saveSession(user){
+  sessionStorage.setItem('jhe_session', JSON.stringify(user));
+}
+function clearSession(){
+  sessionStorage.removeItem('jhe_session');
+}
+function hashPw(pw){
+  // Simple deterministic hash (not cryptographic - demo only)
+  var h = 0;
+  for(var i=0;i<pw.length;i++){ h = Math.imul(31,h)+pw.charCodeAt(i)|0; }
+  return h.toString(36);
+}
+
+function initAuth(){
+  var session = getSession();
+  if(session){ currentUser = session; renderUserBadge(); }
+}
+
+function renderUserBadge(){
+  var btn = document.getElementById('loginBtn');
+  if(!btn) return;
+  if(currentUser){
+    var initials = currentUser.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+    btn.innerHTML = '<div class="user-avatar">'+initials+'</div><span class="user-name">'+currentUser.name.split(' ')[0]+'</span>';
+    btn.style.background = 'var(--surface2)';
+    btn.style.border = '0.5px solid var(--border)';
+    btn.style.borderRadius = '20px';
+    btn.style.padding = '4px 10px 4px 4px';
+    btn.onclick = function(){ toggleUserMenu(); };
+  } else {
+    btn.innerHTML = 'Sign in';
+    btn.style.background = 'transparent';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '0';
+    btn.style.padding = '8px 14px';
+    btn.onclick = function(){ openAuthModal(); };
+  }
+}
+
+function openAuthModal(tab){
+  switchAuthTab(tab||'login');
+  document.getElementById('authOverlay').classList.add('open');
+  setTimeout(function(){
+    var f = document.getElementById(tab==='register'?'regName':'loginEmail');
+    if(f) f.focus();
+  }, 80);
+}
+function closeAuthModal(){
+  document.getElementById('authOverlay').classList.remove('open');
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('regError').classList.remove('show');
+}
+function switchAuthTab(tab){
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('panelLogin').style.display = tab==='login'?'':'none';
+  document.getElementById('panelRegister').style.display = tab==='register'?'':'none';
+}
+
+function doLogin(){
+  var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  var pw = document.getElementById('loginPw').value;
+  var errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  if(!email||!pw){ errEl.textContent='Please enter your email and password.'; errEl.classList.add('show'); return; }
+  var accounts = getAccounts();
+  var user = accounts[email];
+  if(!user||user.pwHash!==hashPw(pw)){ errEl.textContent='Incorrect email or password.'; errEl.classList.add('show'); return; }
+  currentUser = {email:email, name:user.name};
+  saveSession(currentUser);
+  closeAuthModal();
+  renderUserBadge();
+}
+
+function doRegister(){
+  var name = document.getElementById('regName').value.trim();
+  var email = document.getElementById('regEmail').value.trim().toLowerCase();
+  var pw = document.getElementById('regPw').value;
+  var pw2 = document.getElementById('regPw2').value;
+  var errEl = document.getElementById('regError');
+  errEl.classList.remove('show');
+  if(!name){ errEl.textContent='Please enter your name.'; errEl.classList.add('show'); return; }
+  if(!email||!email.includes('@')){ errEl.textContent='Please enter a valid email.'; errEl.classList.add('show'); return; }
+  if(pw.length<8){ errEl.textContent='Password must be at least 8 characters.'; errEl.classList.add('show'); return; }
+  if(pw!==pw2){ errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  var accounts = getAccounts();
+  if(accounts[email]){ errEl.textContent='An account with this email already exists.'; errEl.classList.add('show'); return; }
+  // Save account to the database
+  accounts[email] = {name:name, pwHash:hashPw(pw), createdAt:new Date().toISOString()};
+  saveAccounts(accounts);
+  // Store for the success button, then show success screen
+  window._regEmail = email;
+  document.getElementById('panelRegister').innerHTML =
+    '<div style="padding:32px 24px;text-align:center;">'
+    + '<div style="font-size:36px;margin-bottom:12px;">&#10003;</div>'
+    + '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">Account created!</div>'
+    + '<div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.5;">Your account for <strong>' + email + '</strong> is ready.<br>Sign in with your credentials to continue.</div>'
+    + '<button class="auth-submit" onclick="switchToLoginPrefilled(window._regEmail)">Go to sign in</button>'
+    + '</div>';
+}
+
+function switchToLoginPrefilled(email){
+  // Rebuild the register panel in case user clicks back
+  var kd = "if(event.key===&apos;Enter&apos;)doRegister()";
+  document.getElementById('panelRegister').innerHTML =
+    '<div class="auth-body">'
+    + '<div class="auth-error" id="regError"></div>'
+    + '<div class="auth-field"><label>Full name</label><input type="text" id="regName" placeholder="Jane Smith" onkeydown="' + kd + '"></div>'
+    + '<div class="auth-field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@example.com" onkeydown="' + kd + '"></div>'
+    + '<div class="auth-field"><label>Password</label><input type="password" id="regPw" placeholder="Choose a password (8+ chars)" onkeydown="' + kd + '"></div>'
+    + '<div class="auth-field"><label>Confirm password</label><input type="password" id="regPw2" placeholder="Repeat password" onkeydown="' + kd + '"></div>'
+    + '<button class="auth-submit" onclick="doRegister()">Create account</button>'
+    + '</div>'
+    + '<div class="auth-footer">Already have an account? <a onclick="switchAuthTab(&apos;login&apos;)">Sign in</a></div>';
+  switchAuthTab('login');
+  var emailEl = document.getElementById('loginEmail');
+  if(emailEl){ emailEl.value = email; }
+  var pwEl = document.getElementById('loginPw');
+  if(pwEl){ pwEl.focus(); }
+}
+
+function doLogout(){
+  currentUser = null;
+  clearSession();
+  renderUserBadge();
+  hideUserMenu();
+  document.getElementById('prmOverlay').classList.remove('open');
+}
+
+function toggleUserMenu(){
+  var m = document.getElementById('userMenuDropdown');
+  m.style.display = m.style.display==='none' ? 'block' : 'none';
+}
+function hideUserMenu(){
+  document.getElementById('userMenuDropdown').style.display='none';
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('#loginBtn')&&!e.target.closest('#userMenuDropdown')) hideUserMenu();
+});
+
+// ── Risk modal ──────────────────────────────────────────────────
+function handleRiskClick(){
+  if(!currentUser){
+    openAuthModal('login');
+    return;
+  }
+  openRiskModal();
+}
+
+function openRiskModal(){
+  document.getElementById('prmOverlay').classList.add('open');
+  loadPastEntries();
+}
+function closeRiskModal(){
+  document.getElementById('prmOverlay').classList.remove('open');
+}
+
+function loadPastEntries(){
+  var el=document.getElementById('prmHistory');
+  if(!el||!currentUser)return;
+  try{
+    var prefix='pra:'+currentUser.email+':';
+    var keys=Object.keys(localStorage).filter(function(k){return k.startsWith(prefix);}).sort().reverse().slice(0,10);
+    if(!keys.length){el.style.display='none';return;}
+    var entries=keys.map(function(k){
+      try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e2){return null;}
+    });
+    var valid=entries.filter(Boolean);
+    if(!valid.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML='<div class="prm-section" style="margin-bottom:8px;">Your past assessments ('+valid.length+')</div>'+valid.map(function(e){
+      var tc=e.tier==='Critical'?'#A32D2D':e.tier==='High'?'#633806':e.tier==='Moderate'?'#085041':'#0C447C';
+      var bg=e.tier==='Critical'?'#FCEBEB':e.tier==='High'?'#FAEEDA':e.tier==='Moderate'?'#E1F5EE':'#E6F1FB';
+      var d=new Date(e.timestamp);
+      var dt=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;"><span style="color:var(--text2);">'+dt+'</span><span style="display:flex;gap:6px;align-items:center;"><span style="font-weight:600;color:'+tc+';">Score '+e.score+'</span><span style="padding:1px 7px;border-radius:10px;background:'+bg+';color:'+tc+';font-size:10px;">'+e.tier+'</span><span style="color:var(--text3);">~ '+e.nearestZip+'</span></span></div>';
+    }).join('');
+  }catch(e){el.style.display='none';}
+}
+
+function calcPersonalRisk(){
+  var age=parseInt(document.getElementById('pr-age').value)||null;
+  var insured=document.getElementById('pr-insured').value;
+  var income=document.getElementById('pr-income').value;
+  var food=document.getElementById('pr-food').value;
+  var disability=document.getElementById('pr-disability').value;
+  var bp=document.getElementById('pr-bp').value;
+  var chol=document.getElementById('pr-chol').value;
+  var smoke=document.getElementById('pr-smoke').value;
+  var physdays=document.getElementById('pr-physdays').value;
+  var leisure=document.getElementById('pr-leisure').value;
+  var dep=document.getElementById('pr-dep').value;
+  var mentdays=document.getElementById('pr-mentdays').value;
+  var checkup=document.getElementById('pr-checkup').value;
+
+  var factors=[];
+
+  if(age!==null){
+    var leRisk=Math.min(1,Math.max(0,(age-30)/50));
+    factors.push({label:'Age (LE proxy)',pct:Math.round(leRisk*100),col:'#E24B4A',w:0.10,v:leRisk});
+  }
+  if(insured){
+    var v=insured==='no'?1:0;
+    factors.push({label:'No insurance',pct:Math.round(v*100),col:'#EF9F27',w:0.08,v:v});
+  }
+  if(income){
+    var im={'under25':1,'25to50':0.72,'50to75':0.45,'75to100':0.22,'over100':0};
+    var iv=im[income];
+    if(iv!=null) factors.push({label:'Low income',pct:Math.round(iv*100),col:'#EF9F27',w:0.09,v:iv});
+  }
+  if(food){
+    var fm={hard:1,moderate:0.5,easy:0};
+    var fv=fm[food];
+    if(fv!=null) factors.push({label:'Food access difficulty',pct:Math.round(fv*100),col:'#639922',w:0.05,v:fv});
+  }
+  if(disability){
+    var dv=disability==='yes'?1:0;
+    factors.push({label:'Disability',pct:Math.round(dv*100),col:'#E24B4A',w:0.08,v:dv});
+  }
+  if(bp){
+    var bpv=bp==='yes'?1:0;
+    factors.push({label:'High blood pressure',pct:Math.round(bpv*100),col:'#E24B4A',w:0.09,v:bpv});
+  }
+  if(chol){
+    var cv=chol==='yes'?1:0;
+    factors.push({label:'High cholesterol',pct:Math.round(cv*100),col:'#639922',w:0.05,v:cv});
+  }
+  if(smoke){
+    var sv=smoke==='yes'?1:0;
+    factors.push({label:'Regular smoking',pct:Math.round(sv*100),col:'#EF9F27',w:0.06,v:sv});
+  }
+  if(physdays){
+    var pm={'0':0,'1':0.2,'7':0.5,'14':0.75,'21':1};
+    var pv=pm[physdays];
+    if(pv!=null) factors.push({label:'Poor physical health',pct:Math.round(pv*100),col:'#EF9F27',w:0.07,v:pv});
+  }
+  if(leisure){
+    var lm={regular:0,some:0.5,none:1};
+    var lv=lm[leisure];
+    if(lv!=null) factors.push({label:'No leisure activity',pct:Math.round(lv*100),col:'#EF9F27',w:0.07,v:lv});
+  }
+  if(dep){
+    var dpv=dep==='yes'?1:0;
+    factors.push({label:'Depression / anxiety',pct:Math.round(dpv*100),col:'#885AB1',w:0.06,v:dpv});
+  }
+  if(mentdays){
+    var mm={'0':0,'1':0.2,'7':0.5,'14':0.75,'21':1};
+    var mv=mm[mentdays];
+    if(mv!=null) factors.push({label:'Poor mental health',pct:Math.round(mv*100),col:'#885AB1',w:0.06,v:mv});
+  }
+  if(checkup){
+    var ckv=checkup==='no'?1:0;
+    factors.push({label:'No recent checkup',pct:Math.round(ckv*100),col:'#1D9E75',w:0.08,v:ckv});
+  }
+
+  if(!factors.length){alert('Please fill in at least one field.');return;}
+
+  var tw=factors.reduce(function(s,f){return s+f.w;},0);
+  var score=Math.round(factors.reduce(function(s,f){return s+f.v*f.w;},0)/tw*100);
+
+  var tierInfo=score>=75?{label:'Critical',bg:'#FCEBEB',col:'#A32D2D'}:
+               score>=55?{label:'High',bg:'#FAEEDA',col:'#633806'}:
+               score>=35?{label:'Moderate',bg:'#E1F5EE',col:'#085041'}:
+                         {label:'Low',bg:'#E6F1FB',col:'#0C447C'};
+
+  document.getElementById('prmScoreNum').textContent=score;
+  document.getElementById('prmScoreNum').style.color=tierInfo.col;
+  var tier=document.getElementById('prmTier');
+  tier.textContent=tierInfo.label+' risk';
+  tier.style.background=tierInfo.bg;
+  tier.style.color=tierInfo.col;
+
+  document.getElementById('prmBars').innerHTML=factors.map(function(f){
+    return '<div class="prm-bar-row"><span class="prm-bar-label">'+f.label+'</span><div class="prm-bar-bg"><div class="prm-bar-fill" style="width:'+f.pct+'%;background:'+f.col+';"></div></div><span class="prm-bar-val">'+f.pct+'%</span></div>';
+  }).join('');
+
+  var scored=Z.filter(function(d){return d.risk>0;}).sort(function(a,b){return b.risk-a.risk;});
+  var above=scored.filter(function(d){return d.risk>score;}).length;
+  var pct=Math.round(above/scored.length*100);
+  var nearest=scored.reduce(function(best,d){return Math.abs(d.risk-score)<Math.abs(best.risk-score)?d:best;},scored[0]);
+  document.getElementById('prmCompare').innerHTML='Your score of <strong>'+score+'</strong> is higher than <strong>'+pct+'%</strong> of Duval County ZIPs. Nearest ZIP match: <strong>'+nearest.zip+'</strong> (score '+nearest.risk+').';
+
+  if(currentUser){
+    var entry={
+      timestamp:new Date().toISOString(),
+      score:score,tier:tierInfo.label,
+      age:document.getElementById('pr-age').value||null,
+      insured:document.getElementById('pr-insured').value||null,
+      income:document.getElementById('pr-income').value||null,
+      food:document.getElementById('pr-food').value||null,
+      disability:document.getElementById('pr-disability').value||null,
+      bp:document.getElementById('pr-bp').value||null,
+      cholesterol:document.getElementById('pr-chol').value||null,
+      smoking:document.getElementById('pr-smoke').value||null,
+      physdays:document.getElementById('pr-physdays').value||null,
+      leisure:document.getElementById('pr-leisure').value||null,
+      depression:document.getElementById('pr-dep').value||null,
+      mentaldays:document.getElementById('pr-mentdays').value||null,
+      checkup:document.getElementById('pr-checkup').value||null,
+      nearestZip:nearest.zip
+    };
+    try{
+      var key='pra:'+currentUser.email+':'+Date.now();
+      localStorage.setItem(key,JSON.stringify(entry));
+      loadPastEntries();
+    }catch(e){console.warn('Storage unavailable',e);}
+  }
+
+  document.getElementById('prmResult').classList.add('show');
+}
+
+initAuth();
+</script>
+
+
+
+
+<script>
+// ── index.html ↔ map.html cooperation bridge ──────────────────────────────
+const MAP_ID     = 'map_7ae74881d29a1f1d1d91ff49853e0eef';
+const GEOJSON_ID = 'geo_json_51031f06aa80ad5ff723a2b347c97240';
+
+function getIframeWin() {
+  const f = document.getElementById('mapIframe');
+  return f ? f.contentWindow : null;
+}
+
+// ── Called by map.html when it's ready ──────────────────────────────────
+window.onMapIframeReady = function() {
+  console.log('index.html: map.html ready signal received ✓');
+  iframeRefreshStyles();
+};
+
+// ── Called by map.html on region hover ──────────────────────────────────
+window.handleMapHover = function(zip, nativeEvent) {
+  const d = Z.find(z => z.zip === zip);
+  if (!d) return;
+  const tt = document.getElementById('tooltip');
+  if (!tt) return;
+  tt.innerHTML = buildTooltipHTML(d, layers[currentLayer]);
+  tt.style.display = 'block';
+  positionTooltipFromIframe(nativeEvent);
+  // Subtle highlight
+  highlightRegion(zip, true);
+};
+
+window.handleMapHoverMove = function(nativeEvent) {
+  positionTooltipFromIframe(nativeEvent);
+};
+
+window.handleMapHoverEnd = function(zip) {
+  const tt = document.getElementById('tooltip');
+  if (tt) tt.style.display = 'none';
+  if (zip !== selectedZip) highlightRegion(zip, false);
+};
+
+function positionTooltipFromIframe(e) {
+  const tt = document.getElementById('tooltip');
+  const mapCont = document.getElementById('mapContainer');
+  const iRect = document.getElementById('mapIframe').getBoundingClientRect();
+  const cRect = mapCont.getBoundingClientRect();
+  let left = (iRect.left - cRect.left) + e.clientX - iRect.left + 14;
+  let top  = (iRect.top  - cRect.top)  + e.clientY - iRect.top  + 14;
+  if (left + 240 > cRect.width)  left -= 258;
+  if (top  + 180 > cRect.height) top  -= 198;
+  tt.style.left = left + 'px';
+  tt.style.top  = top  + 'px';
+}
+
+function highlightRegion(zip, on) {
+  const w = getIframeWin();
+  if (!w || !w[GEOJSON_ID]) return;
+  w[GEOJSON_ID].eachLayer(function(lyr) {
+    const lzip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
+    if (lzip !== zip) return;
+    if (on) {
+      lyr.setStyle({ fillOpacity: 0.85, weight: 2, color: '#fff' });
+    } else {
+      const d = Z.find(z => z.zip === zip);
+      const col = d ? heatColor(layers[currentLayer].get(d)) : '#555';
+      lyr.setStyle({ fillColor: col, fillOpacity: 0.55, color: 'rgba(255,255,255,0.5)', weight: 0.8 });
+    }
+  });
+}
+
+// ── Style all regions by current health layer ────────────────────────────
+function iframeRefreshStyles() {
+  const w = getIframeWin();
+  if (!w || !w[GEOJSON_ID]) return;
+  w[GEOJSON_ID].eachLayer(function(lyr) {
+    const zip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
+    if (!zip) return;
+    const d = Z.find(z => z.zip === zip);
+    const isSelected = zip === selectedZip;
+    const col = d ? heatColor(layers[currentLayer].get(d)) : '#555';
+    lyr.setStyle({
+      fillColor: col,
+      fillOpacity: isSelected ? 0.92 : 0.55,
+      color: isSelected ? '#ffffff' : 'rgba(255,255,255,0.5)',
+      weight: isSelected ? 3 : 0.8,
+    });
+  });
+}
+
+// ── Select a ZIP: highlight on map + pan to it ───────────────────────────
+function iframeSelectZip(zip) {
+  const w = getIframeWin();
+  if (!w || !w[GEOJSON_ID]) return;
+  iframeRefreshStyles(); // resets all, then selected gets highlighted
+  if (!zip) return;
+  w[GEOJSON_ID].eachLayer(function(lyr) {
+    const lzip = lyr.feature && lyr.feature.properties && lyr.feature.properties.postcode;
+    if (lzip !== zip) return;
+    lyr.setStyle({ fillOpacity: 0.92, weight: 3, color: '#ffffff' });
+    if (lyr.getBounds && w[MAP_ID]) {
+      w[MAP_ID].fitBounds(lyr.getBounds(), { padding: [40, 40], maxZoom: 13 });
+    }
+  });
+}
+
+// ── Patch layer buttons to re-style iframe ───────────────────────────────
+document.querySelectorAll('.layer-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { setTimeout(iframeRefreshStyles, 20); });
+});
+
+// ── postMessage fallback (if same-origin direct access fails) ────────────
+window.addEventListener('message', function(e) {
+  if (!e.data || !e.data.type) return;
+  if (e.data.type === 'mapReady')   { iframeRefreshStyles(); }
+  if (e.data.type === 'zipClick')   { selectZip(e.data.zip); }
+  if (e.data.type === 'zipHoverEnd'){ const tt=document.getElementById('tooltip'); if(tt) tt.style.display='none'; }
+});
+
+// ── Fallback: also try on iframe load event ───────────────────────────────
+document.getElementById('mapIframe').addEventListener('load', function() {
+  // Small delay to let map.html's own scripts finish
+  setTimeout(function() {
+    const w = getIframeWin();
+    if (w && w[GEOJSON_ID]) {
+      iframeRefreshStyles();
+      console.log('index.html: iframe loaded, styles applied ✓');
+    }
+  }, 300);
+});
+</script>
+
+</body>
+</html>
