@@ -38,7 +38,7 @@ Depression (6%)\
 Smoking (6%)\
 Mental Health (6%)\
 Food Insecurity (5%)\
-High Cholesterol (5%)
+High Cholesterol (5%) <br>
 \
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with:\
 score = (Σ normalized_value × weight) / (Σ weights of available factors) × 100\
