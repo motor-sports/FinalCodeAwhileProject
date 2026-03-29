@@ -43,7 +43,7 @@ Our 14 factors are as follows, in order of importance, followed by their weights
 
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with: <br>
 \
-score = (Σ normalized_value × weight) / (Σ weights of available factors) × 100\
+$text{Score} = \frac{\sum_{i=1}^{n} (v_i \cdot w_i)}{\sum_{i=1}^{n} w_i} \times 100$
 \
 They are then assigned a severity tier,\
 75-100 Critical\
