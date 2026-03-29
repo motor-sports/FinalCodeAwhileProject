@@ -22,7 +22,7 @@ The next step focuses on linking users with local services, organizations, and p
 **Driving Actionable Change:**  
 Finally, the platform empowers users to take concrete action, whether through advocacy, community engagement, or accessing the resources they need, creating a cycle from awareness to intervention to long-term impact.
 
-**How we Calculate Risk:**
+**How we Calculate Risk:**\
 We compare 14 metrics of health and quality of life to each other to result in a simple, single number that summarizes the overall health equity of that zipcode.\
 Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.\
 Life Expectancy (10%)\
@@ -41,7 +41,9 @@ Food Insecurity (5%)\
 High Cholesterol (5%) <br>
 \
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with:\
+$$
 score = (Σ normalized_value × weight) / (Σ weights of available factors) × 100\
+$$
 \
 They are then assigned a severity tier,\
 75-100 Critical\
