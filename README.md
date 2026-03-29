@@ -45,6 +45,7 @@ The above metrics are normalized for each zipcode to avoid major skew caused by 
 \
 $text{Score} = \frac{\sum_{i=1}^{n} (v_i \cdot w_i)}{\sum_{i=1}^{n} w_i} \times 100$
 \
+\
 They are then assigned a severity tier,\
 75-100 Critical\
 55-74 High\
