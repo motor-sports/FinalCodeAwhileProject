@@ -38,13 +38,13 @@ Our 14 factors are as follows, in order of importance, followed by their weights
 <p><strong>&nbsp;&nbsp;11</strong>. Smoking (6%)</p>
 <p><strong>&nbsp;&nbsp;12</strong>. Mental Health (6%)</p>
 <p><strong>&nbsp;&nbsp;13</strong>. Food Insecurity (5%)</p>
-<p><strong>&nbsp;&nbsp;14</strong>. High Cholesterol (5%)</p><br>
-The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with: <br><br>
+<p><strong>&nbsp;&nbsp;14</strong>. High Cholesterol (5%)</p>
+The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes. The aid scores are then calculated with: <br><br>
 
 $score = \frac{\sum_{i=1}^{n} (normalized\ value_i\ \cdot\ weight_i)}{\sum_{i=1}^{n} weights\ of\ available\ factors_i} \times 100$
 <br><br>
 They are then assigned a severity tier,
-* 75-100&nbsp;→ Critical
-* 55-74 &nbsp;&nbsp;→ High
-* 35-54 &nbsp;&nbsp;→ Moderate
-* 0-34 &nbsp;&nbsp;&nbsp;&nbsp;→ Low
+* 75 - 100&nbsp;→ Critical
+* 55 - 74 &nbsp;&nbsp;→ High
+* 35 - 54 &nbsp;&nbsp;→ Moderate
+* &nbsp;&nbsp;0 - 34 &nbsp;&nbsp;→ Low
