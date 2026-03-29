@@ -38,8 +38,8 @@ Depression (6%)\
 Smoking (6%)\
 Mental Health (6%)\
 Food Insecurity (5%)\
-High Cholesterol (5%) <br>
-
+High Cholesterol (5%)
+\
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with:\
 score = (Σ normalized_value × weight) / (Σ weights of available factors) × 100\
 \
@@ -47,4 +47,4 @@ They are then assigned a severity tier,\
 75-100 Critical\
 55-74 High\
 35-54 Moderate\
-0-34 Low\
+0-34 Low
