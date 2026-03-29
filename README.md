@@ -26,20 +26,20 @@ Finally, the platform empowers users to take concrete action, whether through ad
 We compare 14 metrics of health and quality of life to each other to result in a simple, single number that summarizes the overall health equity of that zipcode.\
 Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.<br>
 
-1. Life Expectancy (10%)
-2. Blood Pressure (9%)
-3. Poverty Rate (9%)
-4. Uninsured Rate (8%)
-5. Disability (8%)
-6. Checkup Rate (8%)
-7. No Leisure Activity (7%)
-8. Poor Physical Help (7%)
-9. Social Vulnerability Index (6%)
-10. Depression (6%)
-11. Smoking (6%)
-12. Mental Health (6%)
-13. Food Insecurity (5%)
-14. High Cholesterol (5%)
+<p><strong>1</strong>.Life Expectancy (10%)</p>
+<p><strong>2</strong>.Blood Pressure (9%)</p>
+<p><strong>3</strong>.Poverty Rate (9%)</p>
+<p><strong>4</strong>.Uninsured Rate (8%)</p>
+<p><strong>5</strong>.Disability (8%)</p>
+<p><strong>6</strong>.Checkup Rate (8%)</p>
+<p><strong>7</strong>.No Leisure Activity (7%)</p>
+<p><strong>8</strong>.Poor Physical Help (7%)</p>
+<p><strong>9</strong>.Social Vulnerability Index (6%)</p>
+<p><strong>10</strong>.Depression (6%)</p>
+<p><strong>11</strong>.Smoking (6%)</p>
+<p><strong>12</strong>.Mental Health (6%)</p>
+<p><strong>13</strong>.Food Insecurity (5%)</p>
+<p><strong>14</strong>.High Cholesterol (5%)</p>
 
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with: <br>
 \
