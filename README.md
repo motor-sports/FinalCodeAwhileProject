@@ -47,7 +47,7 @@ $score = \frac{\sum_{i=1}^{n} (normalized\ value_i\ \cdot\ weight_i)}{\sum_{i=1}
 \
 \
 They are then assigned a severity tier,
-* 75-100 &nbsp;→ Critical
+* 75-100 → Critical
 * 55-74 &nbsp;→ High
 * 35-54 &nbsp;→ Moderate
 * 0-34 &nbsp;&nbsp;&nbsp;→ Low
