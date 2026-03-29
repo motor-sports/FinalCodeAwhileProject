@@ -25,7 +25,6 @@ Finally, the platform empowers users to take concrete action, whether through ad
 ## How we Calculate Risk
 We compare 14 metrics of health and quality of life to each other to result in a simple, single number that summarizes the overall health equity of that zipcode.\
 Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.<br>
-
 &nbsp;&nbsp;&nbsp;&nbsp;<p><strong>1</strong>. Life Expectancy (10%)</p>
 &nbsp;&nbsp;&nbsp;&nbsp;<p><strong>2</strong>. Blood Pressure (9%)</p>
 &nbsp;&nbsp;&nbsp;&nbsp;<p><strong>3</strong>. Poverty Rate (9%)</p>
