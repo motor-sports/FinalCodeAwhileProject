@@ -24,21 +24,22 @@ Finally, the platform empowers users to take concrete action, whether through ad
 
 **How we Calculate Risk:**\
 We compare 14 metrics of health and quality of life to each other to result in a simple, single number that summarizes the overall health equity of that zipcode.\
-Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.\
-Life Expectancy (10%)\
-Blood Pressure (9%)\
-Poverty Rate (9%)\
-Uninsured Rate (8%)\
-Disability (8%)\
-Checkup Rate (8%)\
-No Leisure Activity (7%)\
-Poor Physical Help (7%)\
-Social Vulnerability Index (6%)\
-Depression (6%)\
-Smoking (6%)\
-Mental Health (6%)\
-Food Insecurity (5%)\
-High Cholesterol (5%) <br>
+Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.<br>
+\
+1. Life Expectancy (10%)\
+2. Blood Pressure (9%)\
+3. Poverty Rate (9%)\
+4. Uninsured Rate (8%)\
+5. Disability (8%)\
+6. Checkup Rate (8%)\
+7. No Leisure Activity (7%)\
+8. Poor Physical Help (7%)\
+9. Social Vulnerability Index (6%)\
+10. Depression (6%)\
+11. Smoking (6%)\
+12. Mental Health (6%)\
+13. Food Insecurity (5%)\
+14. High Cholesterol (5%) <br>
 \
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with: <br>
 \
