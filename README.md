@@ -50,4 +50,4 @@ They are then assigned a severity tier,
 * 75-100 = Critical
 * 55-74 &nbsp;=> High
 * 35-54 &nbsp;=> Moderate
-* 0-34 &nbsp;&nbsp;=> Low
+* 0-34 &nbsp;&nbsp;&nbsp;=> Low
