@@ -23,28 +23,28 @@ The next step focuses on linking users with local services, organizations, and p
 Finally, the platform empowers users to take concrete action, whether through advocacy, community engagement, or accessing the resources they need, creating a cycle from awareness to intervention to long-term impact.
 
 **How we Calculate Risk:**
-We compare 14 metrics of health and quality of life to each other to result in a simple, single number that summarizes the overall health equity of that zipcode.\n
-Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.\n
-Life Expectancy (10%)\n
-Blood Pressure (9%)\n
-Poverty Rate (9%)\n
-Uninsured Rate (8%)\n
-Disability (8%)\n
-Checkup Rate (8%)\n
-No Leisure Activity (7%)\n
-Poor Physical Help (7%)\n
-Social Vulnerability Index (6%)\n
-Depression (6%)\n
-Smoking (6%)\n
-Mental Health (6%)\n
-Food Insecurity (5%)\n
-High Cholesterol (5%)\n
+We compare 14 metrics of health and quality of life to each other to result in a simple, single number that summarizes the overall health equity of that zipcode.\
+Our 14 factors are as follows, in order of importance, followed by their weights in our calculation.\
+Life Expectancy (10%)\
+Blood Pressure (9%)\
+Poverty Rate (9%)\
+Uninsured Rate (8%)\
+Disability (8%)\
+Checkup Rate (8%)\
+No Leisure Activity (7%)\
+Poor Physical Help (7%)\
+Social Vulnerability Index (6%)\
+Depression (6%)\
+Smoking (6%)\
+Mental Health (6%)\
+Food Insecurity (5%)\
+High Cholesterol (5%)\
 
-The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with:\n
-score = (Σ normalized_value × weight) / (Σ weights of available factors) × 100\n
-\n
-They are then assigned a severity tier,\n
-75-100 Critical\n
-55-74 High\n
-35-54 Moderate\n
-0-34 Low\n
+The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with:\
+score = (Σ normalized_value × weight) / (Σ weights of available factors) × 100\
+\
+They are then assigned a severity tier,\
+75-100 Critical\
+55-74 High\
+35-54 Moderate\
+0-34 Low\
