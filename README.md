@@ -5,7 +5,7 @@ At the heart of every societal challenge lies awareness. Our mission is to empow
 ## Key Features
 
 **Interactive County Map:**  
-Explore your county through a live, dynamic map. Hover over any county to reveal the three most significant local problems, allowing users to quickly understand the key challenges in their area.
+Explore your zipcode through a live, dynamic map. Hover over any zipcode to reveal the three most significant local problems, allowing users to quickly understand the key challenges in their area.
 
 **AI-Powered Insights:**  
 Integrated AI generates concise, informative summaries of notable disparities in each county. Users can also compare local ZIP codes to the highest life expectancy ZIP code, offering perspective on health and social outcomes relative to the rest of the nation.
