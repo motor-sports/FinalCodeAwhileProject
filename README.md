@@ -1,6 +1,6 @@
 # Project Live On
 # Our Mission
-At the heart of every societal challenge lies awareness. Our mission is to empower individuals by providing clear, actionable insights about the issues affecting their communities, and to guide them toward resources that can make a real difference. By transforming data into understanding, we aim to foster informed communities capable of driving meaningful change.
+At the heart of every societal challenge lies awareness. Our mission is to empower individuals by providing clear, actionable insights about the issues affecting their communities, and to guide them toward resources that can make a real impact on their lives. By transforming data into understanding, we aim to foster informed communities capable of driving meaningful change.
 
 ## Key Features
 
