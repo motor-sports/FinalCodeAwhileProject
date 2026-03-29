@@ -38,8 +38,7 @@ Our 14 factors are as follows, in order of importance, followed by their weights
 &nbsp;&nbsp;<p><strong>11</strong>. Smoking (6%)</p>
 &nbsp;&nbsp;<p><strong>12</strong>. Mental Health (6%)</p>
 &nbsp;&nbsp;<p><strong>13</strong>. Food Insecurity (5%)</p>
-&nbsp;&nbsp;<p><strong>14</strong>. High Cholesterol (5%)</p>
-
+&nbsp;&nbsp;<p><strong>14</strong>. High Cholesterol (5%)</p><br>
 The above metrics are normalized for each zipcode to avoid major skew caused by greatly differing sample sizes.The aid scores are then calculated with: <br>
 \
 $score = \frac{\sum_{i=1}^{n} (normalized\ value_i\ \cdot\ weight_i)}{\sum_{i=1}^{n} weights\ of\ available\ factors_i} \times 100$
